@@ -1,0 +1,7 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "node .yarn/releases/yarn-3.2.2.cjs workspace api start"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

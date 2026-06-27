@@ -5,8 +5,7 @@
   "main": "index.js",
   "workspaces": {
     "packages": [
-      "api",
-      "frontend"
+      "api"
     ]
   },
   "scripts": {
@@ -14,7 +13,7 @@
     "setup:api": "cd api && yarn install",
     "start:frontend": "yarn workspace frontend start:dev",
     "start:api": "yarn workspace api start:dev",
-    "start": "yarn workspace api start"
+    "start": "node .yarn/releases/yarn-3.2.2.cjs workspace api start"
   },
   "author": "",
   "license": "ISC",

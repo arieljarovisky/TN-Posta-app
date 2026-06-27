@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["node .yarn/releases/yarn-3.2.2.cjs install"]
+
+[start]
+cmd = "node .yarn/releases/yarn-3.2.2.cjs workspace api start"
