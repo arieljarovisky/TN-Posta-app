@@ -13,12 +13,13 @@
     "setup:frontend": "cd frontend && yarn install",
     "setup:api": "cd api && yarn install",
     "start:frontend": "yarn workspace frontend start:dev",
-    "start:api": "yarn workspace api start:dev"
+    "start:api": "yarn workspace api start:dev",
+    "start": "yarn workspace api start"
   },
   "author": "",
   "license": "ISC",
   "engines": {
-    "node": ">=16.14"
+    "node": ">=20.0.0"
   },
   "packageManager": "yarn@3.2.2"
 }
