@@ -1,5 +1,7 @@
-[phases.setup]
-nixPkgs = ["nodejs_20"]
+providers = ["node"]
+
+[variables]
+NIXPACKS_NODE_VERSION = "20"
 
 [phases.install]
 cmds = ["node .yarn/releases/yarn-3.2.2.cjs install"]
