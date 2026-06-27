@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "prestart": "node -e \"const fs=require('fs');if(!fs.existsSync('db.json'))fs.copyFileSync('db.example.json','db.json')\"",
+    "prestart": "node -e \"const fs=require('fs');const path='db.json';if(!fs.existsSync(path)){fs.copyFileSync('db.example.json',path);}else{const db=JSON.parse(fs.readFileSync(path,'utf8'));if(!Array.isArray(db.shipments)){db.shipments=[];fs.writeFileSync(path,JSON.stringify(db,null,2));}}\"",
     "start:dev": "nodemon --watch 'src/**/*.ts' --watch './.env'",
     "start": "ts-node -r tsconfig-paths/register src/index.ts"
   },
@@ -19,6 +19,7 @@
     "morgan": "^1.10.0",
     "passport": "^0.5.2",
     "passport-jwt": "^4.0.0",
+    "pdfkit": "^0.15.0",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.1.3"
@@ -34,6 +35,7 @@
     "@types/node": "^20.2.5",
     "@types/passport": "^1.0.12",
     "@types/passport-jwt": "^3.0.9",
+    "@types/pdfkit": "^0.13.4",
     "nodemon": "^2.0.22"
   }
 }
