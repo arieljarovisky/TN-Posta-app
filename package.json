@@ -13,7 +13,7 @@
     "setup:api": "cd api && yarn install",
     "start:frontend": "yarn workspace frontend start:dev",
     "start:api": "yarn workspace api start:dev",
-    "start": "node .yarn/releases/yarn-3.2.2.cjs workspace api start"
+    "start": "node api/start-prod.js"
   },
   "author": "",
   "license": "ISC",

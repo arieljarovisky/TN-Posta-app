@@ -12,4 +12,4 @@ COPY api ./api
 
 ENV NODE_ENV=production
 
-CMD ["node", ".yarn/releases/yarn-3.2.2.cjs", "workspace", "api", "start"]
+CMD ["node", "api/start-prod.js"]
