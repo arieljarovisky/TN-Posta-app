@@ -2,35 +2,46 @@ export const PUBLIC_EMBED_SCRIPT_PATH = "/embed/envio.js";
 
 export const PUBLIC_ENVIO_API_PATH = "/api/public/envio";
 
-/** HTML permitido por la API de paginas de Tiendanube (sin form/input). */
+const TRACKING_FORM_STYLES = {
+  wrap: "max-width:520px;margin:24px auto;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#111827",
+  card: "background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 28px rgba(17,24,39,.06);padding:28px 24px",
+  intro:
+    "margin:0 0 24px;text-align:center;font-size:15px;line-height:1.55;color:#374151",
+  label:
+    "display:block;margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;text-align:center",
+  input:
+    "width:100%;padding:18px 16px;border:1px solid #d1d5db;border-radius:10px;font-size:22px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-align:center;box-sizing:border-box;background:#fff;color:#111827",
+  hint: "margin:10px 0 18px;text-align:center;font-size:13px;line-height:1.45;color:#6b7280",
+  button:
+    "width:100%;border:none;border-radius:10px;padding:16px;background:#111827;color:#fff;font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer",
+  disabled:
+    "max-width:520px;margin:24px auto;font-family:system-ui,-apple-system,sans-serif",
+  disabledCard:
+    "background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:28px 24px;text-align:center;font-size:15px;line-height:1.55;color:#6b7280",
+} as const;
+
+/** HTML autocontenido para la API de paginas de Tiendanube (formulario con estilos inline). */
 export const buildTrackingPageApiContent = (
   appOrigin: string,
   pagePath = "/consulta-envio"
 ): string => {
-  const consultUrl = appOrigin ? `${appOrigin}${pagePath}` : pagePath;
+  const action = appOrigin ? `${appOrigin}${pagePath}` : pagePath;
+  const s = TRACKING_FORM_STYLES;
 
-  return `<div id="tn-posta-envio"></div><p>Ingresa tu codigo de seguimiento TPA para conocer el estado de tu envio.</p><p><a href="${consultUrl}" target="_blank" rel="noopener noreferrer"><strong>Consultar envio</strong></a></p><p>El codigo figura en el mail de confirmacion de envio.</p>`;
+  return `<div id="tn-posta-envio" style="${s.wrap}"><div style="${s.card}"><p style="${s.intro}">Ingres&aacute; tu c&oacute;digo de seguimiento TPA para conocer el estado de tu env&iacute;o.</p><form action="${action}" method="get" rel="noopener noreferrer"><label style="${s.label}" for="tn-posta-code">C&oacute;digo de seguimiento</label><input id="tn-posta-code" name="code" required placeholder="TPA00100001" autocomplete="off" style="${s.input}" /><p style="${s.hint}">El c&oacute;digo figura en el mail de confirmaci&oacute;n de env&iacute;o.</p><button type="submit" style="${s.button}">Consultar</button></form></div></div>`;
+};
+
+export const buildTrackingPageDisabledContent = (): string => {
+  const s = TRACKING_FORM_STYLES;
+
+  return `<div style="${s.disabled}"><div style="${s.disabledCard}">La consulta de seguimiento no est&aacute; disponible en este momento. Contact&aacute; a la tienda si necesit&aacute;s ayuda.</div></div>`;
 };
 
 /** HTML para pegar manualmente en el editor de Tiendanube. */
 export const buildEmbedFormHtmlSnippet = (
   appOrigin: string,
   pagePath = "/consulta-envio"
-): string => {
-  const action = `${appOrigin}${pagePath}`;
-
-  return `<div style="max-width:520px;margin:0 auto;font-family:system-ui,-apple-system,sans-serif;color:#111827">
-  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 28px rgba(17,24,39,.06);padding:28px 24px">
-    <p style="margin:0 0 24px;text-align:center;font-size:15px;line-height:1.55;color:#374151">Ingres&aacute; tu c&oacute;digo de seguimiento para conocer el estado de tu env&iacute;o.</p>
-    <form action="${action}" method="get" target="_blank" rel="noopener noreferrer">
-      <label style="display:block;margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;text-align:center" for="tn-posta-code">C&oacute;digo de seguimiento</label>
-      <input id="tn-posta-code" name="code" required placeholder="TPA00100001" autocomplete="off" style="width:100%;padding:18px 16px;border:1px solid #d1d5db;border-radius:10px;font-size:22px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-align:center;box-sizing:border-box" />
-      <p style="margin:10px 0 18px;text-align:center;font-size:13px;color:#6b7280">El c&oacute;digo figura en el mail de confirmaci&oacute;n de env&iacute;o.</p>
-      <button type="submit" style="width:100%;border:none;border-radius:10px;padding:16px;background:#111827;color:#fff;font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer">Consultar</button>
-    </form>
-  </div>
-</div>`;
-};
+): string => buildTrackingPageApiContent(appOrigin, pagePath);
 
 /** Requiere script externo; Tiendanube suele eliminarlo al guardar. */
 export const buildEmbedScriptHtmlSnippet = (appOrigin: string): string =>

@@ -1,6 +1,6 @@
 import { getAppPublicBaseUrl } from "@config/oauth-urls";
 import { tiendanubeContentApiClient } from "@config/tiendanube-content-api.client";
-import { buildTrackingPageApiContent } from "@features/public/embed-widget";
+import { buildTrackingPageApiContent, buildTrackingPageDisabledContent } from "@features/public/embed-widget";
 import { PUBLIC_SHIPPING_PAGE_PATH } from "@config/public-pages";
 import {
   getTrackingPageHandle,
@@ -40,8 +40,7 @@ type TiendanubeStore = {
   country?: string;
 };
 
-const DISABLED_PAGE_HTML =
-  '<p style="text-align:center;font-family:system-ui,sans-serif;color:#6b7280;padding:24px">La consulta de seguimiento no esta disponible en este momento. Contacta a la tienda si necesitas ayuda.</p>';
+const DISABLED_PAGE_HTML = buildTrackingPageDisabledContent();
 
 const SEO_DESCRIPTION =
   "Consulta el estado de tu envio con tu codigo TPA.";
