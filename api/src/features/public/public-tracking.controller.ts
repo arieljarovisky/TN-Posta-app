@@ -75,8 +75,10 @@ class PublicTrackingController {
           ""
       );
 
+      const isEmbed = req.query.embed === "1" || req.query.embed === "true";
+
       const renderPage = (options: Parameters<typeof buildTrackingPageHtml>[0]) =>
-        res.send(buildTrackingPageHtml(options));
+        res.send(buildTrackingPageHtml({ ...options, embed: isEmbed }));
 
       if (!trackingCode) {
         return renderPage({
@@ -89,7 +91,7 @@ class PublicTrackingController {
           pageTitle: "Seguimiento de envio",
           codeInput: trackingCode,
           errorMessage:
-            "El codigo debe tener formato TPA seguido de 8 digitos (ej. TPA00100001).",
+            "No pudimos consultar el seguimiento. Intentá de nuevo en unos minutos.",
         });
       }
 
@@ -99,7 +101,8 @@ class PublicTrackingController {
         return renderPage({
           pageTitle: "Seguimiento de envio",
           codeInput: trackingCode,
-          errorMessage: "No encontramos un envio con ese codigo de seguimiento.",
+          errorMessage:
+            "No pudimos consultar el seguimiento. Intentá de nuevo en unos minutos.",
         });
       }
 

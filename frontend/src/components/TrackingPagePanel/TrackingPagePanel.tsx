@@ -36,7 +36,7 @@ const TrackingPagePanel = ({
   };
 
   const embedCode = pageUrl
-    ? `<iframe src="${pageUrl}" title="Seguimiento de envio" width="100%" height="720" style="border:0;border-radius:12px;" loading="lazy"></iframe>`
+    ? `<iframe src="${pageUrl}?embed=1" title="Seguimiento de envio" width="100%" height="420" style="border:0;border-radius:12px;background:#eceff3;" loading="lazy"></iframe>`
     : "";
 
   const copyEmbed = async () => {
