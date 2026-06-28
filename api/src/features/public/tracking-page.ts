@@ -119,20 +119,20 @@ export const buildTrackingPageHtml = (options: TrackingPageOptions): string => {
     }
     body {
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #eceff3;
+      background: ${embed ? "transparent" : "#eceff3"};
       color: #111827;
       -webkit-font-smoothing: antialiased;
     }
     .page {
       max-width: 720px;
       margin: 0 auto;
-      padding: ${embed ? "16px 12px 24px" : "40px 20px 48px"};
+      padding: ${embed ? "8px 4px 12px" : "40px 20px 48px"};
     }
     .card {
       background: #fff;
       border: 1px solid #e5e7eb;
       border-radius: 14px;
-      box-shadow: 0 8px 28px rgba(17, 24, 39, 0.06);
+      box-shadow: ${embed ? "none" : "0 8px 28px rgba(17, 24, 39, 0.06)"};
       padding: 28px 24px 24px;
     }
     .intro {
