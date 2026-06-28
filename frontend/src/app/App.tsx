@@ -9,33 +9,78 @@ import NexoSyncRoute from "./NexoSyncRoute";
 import { DarkModeProvider } from "./DarkModeProvider";
 import {
   completeOAuthInstallIfNeeded,
+  getInstallStatusFromUrl,
 } from "./oauth/oauthInstall";
+import { isTiendanubeEmbedded } from "./oauth/installUi";
+import InstallSuccessScreen from "./oauth/InstallSuccessScreen";
+import StandaloneNoticeScreen from "./oauth/StandaloneNoticeScreen";
 import "./I18n";
+
+const NEXO_CONNECT_TIMEOUT_MS = 8000;
 
 const App = () => {
   const [isConnect, setIsConnect] = useState(false);
+  const [nexoFailed, setNexoFailed] = useState(false);
+  const [showInstallSuccess, setShowInstallSuccess] = useState(
+    () => getInstallStatusFromUrl().installed
+  );
   const [isInstalling] = useState(() => completeOAuthInstallIfNeeded());
+  const isEmbedded = isTiendanubeEmbedded();
 
   useEffect(() => {
-    if (isInstalling) {
-      console.info("[auth/frontend] Esperando redirect de instalacion OAuth");
+    if (isInstalling || showInstallSuccess) {
       return;
     }
 
-    if (!isConnect) {
-      console.info("[auth/frontend] Conectando Nexo...");
-      connect(nexo)
-        .then(async () => {
-          console.info("[auth/frontend] Nexo conectado correctamente");
-          setIsConnect(true);
-          iAmReady(nexo);
-        })
-        .catch((error) => {
-          console.error("[auth/frontend] Error conectando Nexo", error);
-          setIsConnect(false);
-        });
+    if (!isEmbedded) {
+      console.info(
+        "[auth/frontend] App abierta fuera del admin de Tiendanube"
+      );
+      return;
     }
-  }, [isConnect, isInstalling]);
+
+    if (isConnect || nexoFailed) {
+      return;
+    }
+
+    console.info("[auth/frontend] Conectando Nexo...");
+
+    let cancelled = false;
+
+    const timeoutId = window.setTimeout(() => {
+      if (!cancelled) {
+        console.warn("[auth/frontend] Timeout conectando Nexo");
+        setNexoFailed(true);
+      }
+    }, NEXO_CONNECT_TIMEOUT_MS);
+
+    connect(nexo)
+      .then(async () => {
+        if (cancelled) {
+          return;
+        }
+
+        console.info("[auth/frontend] Nexo conectado correctamente");
+        setIsConnect(true);
+        iAmReady(nexo);
+      })
+      .catch((error) => {
+        if (cancelled) {
+          return;
+        }
+
+        console.error("[auth/frontend] Error conectando Nexo", error);
+        setNexoFailed(true);
+      })
+      .finally(() => {
+        window.clearTimeout(timeoutId);
+      });
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+    };
+  }, [isConnect, isInstalling, isEmbedded, nexoFailed, showInstallSuccess]);
 
   if (isInstalling) {
     return (
@@ -50,7 +95,23 @@ const App = () => {
     );
   }
 
+  if (showInstallSuccess) {
+    return (
+      <InstallSuccessScreen
+        onContinue={() => setShowInstallSuccess(false)}
+      />
+    );
+  }
+
+  if (!isEmbedded) {
+    return <StandaloneNoticeScreen />;
+  }
+
   if (!isConnect) {
+    if (nexoFailed) {
+      return <StandaloneNoticeScreen />;
+    }
+
     return (
       <Box
         height="100vh"
