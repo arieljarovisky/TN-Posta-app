@@ -1,6 +1,6 @@
 import { getAppPublicBaseUrl } from "@config/oauth-urls";
 import { tiendanubeContentApiClient } from "@config/tiendanube-content-api.client";
-import { buildEmbedFormHtmlSnippet } from "@features/public/embed-widget";
+import { buildTrackingPageApiContent } from "@features/public/embed-widget";
 import { PUBLIC_SHIPPING_PAGE_PATH } from "@config/public-pages";
 import {
   getTrackingPageHandle,
@@ -103,6 +103,7 @@ const buildLegacyUpdatePayload = (
     return {
       title,
       content,
+      published: true,
     };
   }
 
@@ -117,7 +118,17 @@ const buildLegacyUpdatePayload = (
   return {
     title: titleByLanguage,
     content: contentByLanguage,
+    published: true,
   };
+};
+
+const isRecoverablePagePayloadError = (error: unknown): boolean => {
+  if (!(error instanceof HttpErrorException)) {
+    return false;
+  }
+
+  const status = Number(error.statusCode);
+  return status >= 400 && status < 500;
 };
 
 const normalizeStoreBaseUrl = (store: TiendanubeStore): string => {
@@ -269,25 +280,59 @@ class TrackingPageSyncService {
     content: string,
     seoHandle: string
   ): Promise<void> {
-    try {
-      await tiendanubeContentApiClient.put(
-        `${storeId}/pages/${pageId}`,
-        buildPagePayload(languageKeys, title, content, seoHandle)
-      );
-      return;
-    } catch (error) {
-      const status =
-        error instanceof HttpErrorException ? Number(error.statusCode) : undefined;
+    const payloads = [
+      buildLegacyUpdatePayload(languageKeys, title, content),
+      buildPagePayload(languageKeys, title, content, seoHandle),
+    ];
 
-      if (status !== 400 && status !== 422) {
-        throw error;
+    let lastError: unknown;
+
+    for (const payload of payloads) {
+      try {
+        await tiendanubeContentApiClient.put(`${storeId}/pages/${pageId}`, payload);
+        return;
+      } catch (error) {
+        lastError = error;
+
+        if (!isRecoverablePagePayloadError(error)) {
+          throw error;
+        }
       }
     }
 
-    await tiendanubeContentApiClient.put(
-      `${storeId}/pages/${pageId}`,
-      buildLegacyUpdatePayload(languageKeys, title, content)
-    );
+    throw lastError;
+  }
+
+  private async createPage(
+    storeId: number,
+    languageKeys: string[],
+    title: string,
+    content: string,
+    seoHandle: string
+  ): Promise<TiendanubePage> {
+    const payloads = [
+      buildPagePayload(languageKeys, title, content, seoHandle),
+      buildLegacyUpdatePayload(languageKeys, title, content),
+    ];
+
+    let lastError: unknown;
+
+    for (const payload of payloads) {
+      try {
+        return (await tiendanubeContentApiClient.post(
+          `${storeId}/pages`,
+          payload
+        )) as TiendanubePage;
+      } catch (error) {
+        lastError = error;
+
+        if (!isRecoverablePagePayloadError(error)) {
+          throw error;
+        }
+      }
+    }
+
+    throw lastError;
   }
 
   async syncTrackingPage(
@@ -306,9 +351,9 @@ class TrackingPageSyncService {
   }> {
     const handle = getTrackingPageHandle();
     const appOrigin = getAppPublicBaseUrl();
-    const formHtml = buildEmbedFormHtmlSnippet(appOrigin, PUBLIC_SHIPPING_PAGE_PATH);
+    const pageContent = buildTrackingPageApiContent(appOrigin, PUBLIC_SHIPPING_PAGE_PATH);
     const title = options.title.trim() || "Seguimiento de envio";
-    const content = options.enabled ? formHtml : DISABLED_PAGE_HTML;
+    const content = options.enabled ? pageContent : DISABLED_PAGE_HTML;
 
     try {
       const store = await this.getStore(storeId);
@@ -341,10 +386,13 @@ class TrackingPageSyncService {
           languageKeys,
         });
       } else if (options.enabled) {
-        const created = (await tiendanubeContentApiClient.post(
-          `${storeId}/pages`,
-          buildPagePayload(languageKeys, title, content, handle)
-        )) as TiendanubePage;
+        const created = await this.createPage(
+          storeId,
+          languageKeys,
+          title,
+          content,
+          handle
+        );
 
         pageId = created.id;
 

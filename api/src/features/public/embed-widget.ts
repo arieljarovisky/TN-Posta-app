@@ -2,7 +2,17 @@ export const PUBLIC_EMBED_SCRIPT_PATH = "/embed/envio.js";
 
 export const PUBLIC_ENVIO_API_PATH = "/api/public/envio";
 
-/** Tiendanube elimina etiquetas script al guardar paginas: usar formulario HTML puro. */
+/** HTML permitido por la API de paginas de Tiendanube (sin form/input). */
+export const buildTrackingPageApiContent = (
+  appOrigin: string,
+  pagePath = "/consulta-envio"
+): string => {
+  const consultUrl = appOrigin ? `${appOrigin}${pagePath}` : pagePath;
+
+  return `<div id="tn-posta-envio"></div><p>Ingresa tu codigo de seguimiento TPA para conocer el estado de tu envio.</p><p><a href="${consultUrl}" target="_blank" rel="noopener noreferrer"><strong>Consultar envio</strong></a></p><p>El codigo figura en el mail de confirmacion de envio.</p>`;
+};
+
+/** HTML para pegar manualmente en el editor de Tiendanube. */
 export const buildEmbedFormHtmlSnippet = (
   appOrigin: string,
   pagePath = "/consulta-envio"
