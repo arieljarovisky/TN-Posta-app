@@ -14,6 +14,7 @@ import {
   PUBLIC_SHIPPING_PAGE_PATH,
 } from "@config/public-pages";
 import { PUBLIC_EMBED_SCRIPT_PATH, PUBLIC_ENVIO_API_PATH } from "@features/public/embed-widget";
+import { PUBLIC_STOREFRONT_SCRIPT_PATH } from "@features/public/storefront-script";
 import { WebhookController } from "@features/webhook";
 import { requireServiceEnabledMiddleware, requireStoreCredentialsMiddleware } from "@middlewares";
 
@@ -32,6 +33,8 @@ routes.get("/api/public/tracking", PublicTrackingController.getTracking);
 routes.get(`${PUBLIC_ENVIO_API_PATH}/:trackingCode`, PublicTrackingController.getTracking);
 routes.get(PUBLIC_ENVIO_API_PATH, PublicTrackingController.getTracking);
 routes.get(PUBLIC_EMBED_SCRIPT_PATH, PublicTrackingController.getEmbedScript);
+routes.get(PUBLIC_STOREFRONT_SCRIPT_PATH, PublicTrackingController.getStorefrontScript);
+routes.get("/api/public/tienda/:storeId/seguimiento", PublicTrackingController.getStoreTrackingConfig);
 routes.get(PUBLIC_SHIPPING_PAGE_PATH, PublicTrackingController.getTrackingPage);
 routes.get(`${PUBLIC_SHIPPING_PAGE_PATH}/:trackingCode`, PublicTrackingController.getTrackingPage);
 routes.get(LEGACY_SHIPPING_PAGE_PATH, PublicTrackingController.redirectLegacyTrackingPage);

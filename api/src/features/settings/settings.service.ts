@@ -3,6 +3,7 @@ import {
   normalizeShippingRates,
   ShippingCarrierService,
 } from "@features/shipping";
+import TrackingPageSyncService from "@features/storefront/tracking-page-sync.service";
 import { StoreSettings } from "@features/settings/interfaces/store-settings.interface";
 import { ShippingRateRule } from "@features/shipping/interfaces/shipping.interfaces";
 import { BadRequestException } from "@utils";
@@ -56,7 +57,11 @@ class SettingsService {
       tracking_page_enabled?: boolean;
       tracking_page_title?: string;
     }
-  ): Promise<{ settings: StoreSettings; shipping_sync_message?: string }> {
+  ): Promise<{
+    settings: StoreSettings;
+    shipping_sync_message?: string;
+    tracking_page_sync_message?: string;
+  }> {
     const current = settingsRepository.getByStoreId(storeId);
     const normalizedRates = data.shipping_rates
       ? normalizeShippingRates(data.shipping_rates)
@@ -133,8 +138,22 @@ class SettingsService {
     });
 
     let shipping_sync_message: string | undefined;
+    let tracking_page_sync_message: string | undefined;
 
     const hasCredentials = Boolean(userRepository.findOptional(storeId)?.access_token);
+    const trackingPageChanged =
+      data.tracking_page_enabled !== undefined ||
+      data.tracking_page_title !== undefined;
+
+    if (hasCredentials && trackingPageChanged) {
+      const syncResult = await TrackingPageSyncService.syncTrackingPage(storeId, {
+        enabled: settings.tracking_page_enabled ?? false,
+        title: settings.tracking_page_title ?? "Seguimiento de envio",
+        existingPageId: settings.tracking_page_id,
+      });
+
+      tracking_page_sync_message = syncResult.message;
+    }
 
     if (hasCredentials && (data.shipping_rates || data.carrier_name || data.enabled)) {
       const syncResult = await ShippingCarrierService.syncCarrierOptions(
@@ -156,6 +175,7 @@ class SettingsService {
     return {
       settings: settingsRepository.getByStoreId(storeId),
       shipping_sync_message,
+      tracking_page_sync_message,
     };
   }
 

@@ -3,9 +3,8 @@ import { Box, Button, Input, Label, Text, Toggle } from "@nimbus-ds/components";
 type TrackingPagePanelProps = {
   enabled: boolean;
   title: string;
-  pageUrl?: string;
-  embedHtml?: string;
-  storePublicUrl?: string | null;
+  pagePublicUrl?: string | null;
+  syncMessage?: string | null;
   disabled?: boolean;
   saving?: boolean;
   onEnabledChange: (enabled: boolean) => void;
@@ -16,30 +15,25 @@ type TrackingPagePanelProps = {
 const TrackingPagePanel = ({
   enabled,
   title,
-  pageUrl = "",
-  embedHtml = "",
-  storePublicUrl,
+  pagePublicUrl,
+  syncMessage,
   disabled = false,
   saving = false,
   onEnabledChange,
   onTitleChange,
   onSave,
 }: TrackingPagePanelProps) => {
-  const copyText = async (value: string, promptLabel: string) => {
-    if (!value) {
+  const copyUrl = async () => {
+    if (!pagePublicUrl) {
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(value);
+      await navigator.clipboard.writeText(pagePublicUrl);
     } catch {
-      window.prompt(promptLabel, value);
+      window.prompt("Copia esta URL:", pagePublicUrl);
     }
   };
-
-  const iframeCode = pageUrl
-    ? `<iframe src="${pageUrl}?embed=1" title="Consulta de envio" width="100%" height="480" style="border:0;border-radius:12px;background:#fff;" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`
-    : "";
 
   return (
     <Box display="flex" flexDirection="column" gap="4">
@@ -52,7 +46,8 @@ const TrackingPagePanel = ({
         <Box display="flex" flexDirection="column" gap="1">
           <Text fontWeight="medium">Activar pagina de seguimiento</Text>
           <Text fontSize="caption" color="neutral-textLow">
-            Tus clientes podran consultar el estado del envio con su codigo TPA.
+            Al guardar, creamos o actualizamos la pagina en tu tienda de
+            Tiendanube automaticamente.
           </Text>
         </Box>
         <Toggle
@@ -74,110 +69,57 @@ const TrackingPagePanel = ({
         />
       </Box>
 
-      {pageUrl && (
+      {syncMessage && (
+        <Box
+          padding="3"
+          backgroundColor="neutral-surface"
+          borderRadius="2"
+        >
+          <Text fontSize="caption">{syncMessage}</Text>
+        </Box>
+      )}
+
+      {enabled && pagePublicUrl && (
         <Box
           padding="3"
           backgroundColor="neutral-surface"
           borderRadius="2"
           display="flex"
           flexDirection="column"
-          gap="3"
+          gap="2"
         >
-          <Box display="flex" flexDirection="column" gap="2">
-            <Text fontWeight="medium">Codigo para Tiendanube (recomendado)</Text>
-            <Text fontSize="caption" color="neutral-textLow">
-              Tiendanube elimina etiquetas script e iframes al guardar. Usa este
-              formulario HTML (sin JavaScript): Paginas → Seguimiento de envios →
-              reemplaza todo el contenido y pega el codigo.
-            </Text>
-            {embedHtml && (
-              <Box
-                as="pre"
-                padding="3"
-                backgroundColor="neutral-background"
-                borderRadius="2"
-                style={{
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-all",
-                  margin: 0,
-                  border: "1px solid #e5e7eb",
-                  fontSize: "12px",
-                }}
-              >
-                {embedHtml}
-              </Box>
-            )}
-            <Box display="flex" flexWrap="wrap" gap="2">
-              <Button
-                appearance="primary"
-                disabled={!enabled || !embedHtml}
-                onClick={() =>
-                  copyText(embedHtml, "Copia este codigo para Tiendanube:")
-                }
-              >
-                Copiar codigo HTML
-              </Button>
-            </Box>
-          </Box>
-
-          <Box display="flex" flexDirection="column" gap="2">
-            <Text fontWeight="medium">Enlace en el menu</Text>
-            <Text fontSize="caption" color="neutral-textLow">
-              Alternativa: enlace en el menu a esta URL. Al consultar, el cliente ve
-              el resultado en una pesta&ntilde;a nueva.
-            </Text>
-            <Text fontSize="caption">{pageUrl}</Text>
-            <Box display="flex" flexWrap="wrap" gap="2">
-              <Button
-                appearance="neutral"
-                disabled={!enabled}
-                onClick={() => copyText(pageUrl, "Copia esta URL:")}
-              >
-                Copiar URL
-              </Button>
-              <Button
-                as="a"
-                appearance="neutral"
-                href={pageUrl}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Ver pagina
-              </Button>
-            </Box>
-          </Box>
-
-          <Box display="flex" flexDirection="column" gap="2">
-            <Text fontWeight="medium">Iframe (no funciona en Tiendanube)</Text>
-            <Text fontSize="caption" color="neutral-textLow">
-              Solo util si tu sitio permite embeber paginas externas.
-            </Text>
+          <Text fontWeight="medium">Pagina en tu tienda</Text>
+          <Text fontSize="caption" color="neutral-textLow">
+            Si aun no aparece en el menu, agrega un enlace en Navegacion apuntando
+            a esta URL (solo la primera vez).
+          </Text>
+          <Text fontSize="caption">{pagePublicUrl}</Text>
+          <Box display="flex" flexWrap="wrap" gap="2">
+            <Button appearance="neutral" onClick={copyUrl}>
+              Copiar URL de la tienda
+            </Button>
             <Button
+              as="a"
               appearance="neutral"
-              disabled={!enabled || !iframeCode}
-              onClick={() => copyText(iframeCode, "Copia este iframe:")}
+              href={pagePublicUrl}
+              target="_blank"
+              rel="noreferrer"
             >
-              Copiar iframe
+              Ver en la tienda
             </Button>
           </Box>
-
-          {storePublicUrl && (
-            <Text fontSize="caption" color="neutral-textLow">
-              Tienda: {storePublicUrl}
-            </Text>
-          )}
         </Box>
       )}
 
       {!enabled && (
         <Text fontSize="caption" color="neutral-textLow">
-          Mientras este desactivada, los clientes veran un aviso si consultan un
-          codigo.
+          Al desactivar, la pagina de la tienda mostrara un aviso de consulta no
+          disponible.
         </Text>
       )}
 
       <Button appearance="primary" disabled={disabled || saving} onClick={onSave}>
-        {saving ? "Guardando..." : "Guardar pagina de seguimiento"}
+        {saving ? "Publicando..." : "Guardar y publicar en Tiendanube"}
       </Button>
     </Box>
   );

@@ -69,6 +69,45 @@ class SettingsRepository {
         data.tracking_page_enabled ?? existing.tracking_page_enabled ?? false,
       tracking_page_title:
         data.tracking_page_title ?? existing.tracking_page_title ?? "Seguimiento de envio",
+      tracking_page_id: existing.tracking_page_id,
+      tracking_page_handle: existing.tracking_page_handle,
+      tracking_page_public_url: existing.tracking_page_public_url,
+      updated_at: new Date().toISOString(),
+    };
+
+    const stored = database
+      .get("store_settings")
+      .find({ store_id: Number(storeId) })
+      .value();
+
+    if (stored) {
+      database
+        .get("store_settings")
+        .find({ store_id: Number(storeId) })
+        .assign(settings)
+        .write();
+    } else {
+      database.get("store_settings").push(settings).write();
+    }
+
+    return settings;
+  }
+
+  updateTrackingPageMeta(
+    storeId: number,
+    data: {
+      tracking_page_id?: number;
+      tracking_page_handle?: string;
+      tracking_page_public_url?: string;
+    }
+  ): StoreSettings {
+    const existing = this.getByStoreId(storeId);
+    const settings: StoreSettings = {
+      ...existing,
+      tracking_page_id: data.tracking_page_id ?? existing.tracking_page_id,
+      tracking_page_handle: data.tracking_page_handle ?? existing.tracking_page_handle,
+      tracking_page_public_url:
+        data.tracking_page_public_url ?? existing.tracking_page_public_url,
       updated_at: new Date().toISOString(),
     };
 

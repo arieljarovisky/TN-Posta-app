@@ -18,6 +18,8 @@ export const useStoreSettings = () => {
   const [trackingPageEnabled, setTrackingPageEnabled] = useState(false);
   const [trackingPageTitle, setTrackingPageTitle] = useState("Seguimiento de envio");
   const [trackingPageUrl, setTrackingPageUrl] = useState("");
+  const [trackingPagePublicUrl, setTrackingPagePublicUrl] = useState<string | null>(null);
+  const [trackingPageSyncMessage, setTrackingPageSyncMessage] = useState<string | null>(null);
   const [trackingPageEmbedHtml, setTrackingPageEmbedHtml] = useState("");
   const [storePublicUrl, setStorePublicUrl] = useState<string | null>(null);
   const [shippingOptionNames, setShippingOptionNames] = useState<string[]>([]);
@@ -44,6 +46,8 @@ export const useStoreSettings = () => {
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
       setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
       setTrackingPageUrl(data.tracking_page_url ?? "");
+      setTrackingPagePublicUrl(data.tracking_page_public_url ?? null);
+      setTrackingPageSyncMessage(data.tracking_page_sync_message ?? null);
       setTrackingPageEmbedHtml(data.tracking_page_embed_html ?? "");
       setStorePublicUrl(data.store_public_url ?? null);
       setShippingOptionNames(data.shipping_option_names ?? []);
@@ -78,6 +82,8 @@ export const useStoreSettings = () => {
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
       setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
       setTrackingPageUrl(data.tracking_page_url ?? "");
+      setTrackingPagePublicUrl(data.tracking_page_public_url ?? null);
+      setTrackingPageSyncMessage(data.tracking_page_sync_message ?? null);
       setTrackingPageEmbedHtml(data.tracking_page_embed_html ?? "");
       setStorePublicUrl(data.store_public_url ?? null);
       setShippingOptionNames(data.shipping_option_names ?? []);
@@ -107,6 +113,8 @@ export const useStoreSettings = () => {
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
       setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
       setTrackingPageUrl(data.tracking_page_url ?? "");
+      setTrackingPagePublicUrl(data.tracking_page_public_url ?? null);
+      setTrackingPageSyncMessage(data.tracking_page_sync_message ?? null);
       setTrackingPageEmbedHtml(data.tracking_page_embed_html ?? "");
       setStorePublicUrl(data.store_public_url ?? null);
       setShippingOptionNames(data.shipping_option_names ?? []);
@@ -130,6 +138,8 @@ export const useStoreSettings = () => {
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
       setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
       setTrackingPageUrl(data.tracking_page_url ?? "");
+      setTrackingPagePublicUrl(data.tracking_page_public_url ?? null);
+      setTrackingPageSyncMessage(data.tracking_page_sync_message ?? null);
       setTrackingPageEmbedHtml(data.tracking_page_embed_html ?? "");
       setStorePublicUrl(data.store_public_url ?? null);
       setLoadError(null);
@@ -167,10 +177,12 @@ export const useStoreSettings = () => {
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
       setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
       setTrackingPageUrl(data.tracking_page_url ?? "");
+      setTrackingPagePublicUrl(data.tracking_page_public_url ?? null);
+      setTrackingPageSyncMessage(data.tracking_page_sync_message ?? null);
       setTrackingPageEmbedHtml(data.tracking_page_embed_html ?? "");
       setStorePublicUrl(data.store_public_url ?? null);
       setLoadError(null);
-      return { success: true };
+      return { success: true, syncMessage: data.tracking_page_sync_message };
     } catch {
       return { success: false };
     } finally {
@@ -189,6 +201,8 @@ export const useStoreSettings = () => {
     trackingPageEnabled,
     trackingPageTitle,
     trackingPageUrl,
+    trackingPagePublicUrl,
+    trackingPageSyncMessage,
     trackingPageEmbedHtml,
     storePublicUrl,
     shippingOptionNames,

@@ -23,6 +23,9 @@ export interface StoreSettings {
   sender?: SenderConfig;
   tracking_page_enabled?: boolean;
   tracking_page_title?: string;
+  tracking_page_id?: number;
+  tracking_page_handle?: string;
+  tracking_page_public_url?: string;
   updated_at: string;
 }
 
@@ -49,6 +52,11 @@ export interface StoreSettingsResponse {
   tracking_page_enabled?: boolean;
   tracking_page_title?: string;
   tracking_page_url?: string;
+  tracking_page_public_url?: string | null;
+  tracking_page_sync_message?: string;
+  tracking_page_embed_script_url?: string;
+  tracking_page_embed_html?: string;
+  tracking_page_embed_script_html?: string;
   store_public_url?: string | null;
   shipping_sync_message?: string;
   updated_at: string;

@@ -49,9 +49,8 @@ const Home = () => {
     sender,
     trackingPageEnabled,
     trackingPageTitle,
-    trackingPageUrl,
-    trackingPageEmbedHtml,
-    storePublicUrl,
+    trackingPagePublicUrl,
+    trackingPageSyncMessage,
     toggleEnabled,
     saveShippingConfig,
     saveZoneLocalities,
@@ -235,8 +234,8 @@ const Home = () => {
       addToast({
         id: crypto.randomUUID(),
         type: "success",
-        text: t("home.trackingPageSaved"),
-        duration: 4000,
+        text: result.syncMessage ?? t("home.trackingPageSaved"),
+        duration: 8000,
       });
       return;
     }
@@ -499,9 +498,8 @@ const Home = () => {
                   <TrackingPagePanel
                     enabled={trackingPageEnabledInput}
                     title={trackingPageTitleInput}
-                    pageUrl={trackingPageUrl}
-                    embedHtml={trackingPageEmbedHtml}
-                    storePublicUrl={storePublicUrl}
+                    pagePublicUrl={trackingPagePublicUrl}
+                    syncMessage={trackingPageSyncMessage}
                     disabled={loading}
                     saving={saving}
                     onEnabledChange={setTrackingPageEnabledInput}

@@ -2,12 +2,17 @@ import { NextFunction, Request, Response } from "express";
 
 import { getAppPublicBaseUrl } from "@config/oauth-urls";
 import { buildDeliveryPageHtml } from "@features/public/delivery-page";
-import { buildEmbedScript } from "@features/public/embed-widget";
+import { buildEmbedScript, PUBLIC_ENVIO_API_PATH } from "@features/public/embed-widget";
 import {
   buildPublicTrackingPayload,
 } from "@features/public/tracking-data";
 import { buildTrackingPageHtml } from "@features/public/tracking-page";
+import {
+  buildStorefrontTrackingScript,
+  PUBLIC_STOREFRONT_SCRIPT_PATH,
+} from "@features/public/storefront-script";
 import { PUBLIC_SHIPPING_PAGE_PATH } from "@config/public-pages";
+import { getTrackingPageHandle } from "@features/storefront/tracking-page.constants";
 import TrackingService, {
   isValidTrackingCode,
   normalizeTrackingCode,
@@ -35,6 +40,62 @@ class PublicTrackingController {
       res.setHeader("Cache-Control", "public, max-age=300");
 
       return res.send(buildEmbedScript(origin));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  getStorefrontScript(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Response | void {
+    try {
+      const origin = getAppPublicBaseUrl(req);
+
+      if (!origin) {
+        return res
+          .status(StatusCode.INTERNAL_SERVER_ERROR)
+          .send("// APP_PUBLIC_URL no configurada");
+      }
+
+      res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+      res.setHeader("Cache-Control", "public, max-age=300");
+
+      return res.send(
+        buildStorefrontTrackingScript(origin, getTrackingPageHandle())
+      );
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  getStoreTrackingConfig(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Response | void {
+    try {
+      const storeId = Number(req.params.storeId);
+      const origin = getAppPublicBaseUrl(req);
+
+      if (!Number.isFinite(storeId) || storeId <= 0) {
+        return res
+          .status(StatusCode.BAD_REQUEST)
+          .json({ message: "Tienda invalida" });
+      }
+
+      const settings = settingsRepository.getByStoreId(storeId);
+
+      return res.status(StatusCode.OK).json({
+        enabled: settings.tracking_page_enabled ?? false,
+        pageTitle: settings.tracking_page_title ?? "Seguimiento de envio",
+        handle: settings.tracking_page_handle ?? getTrackingPageHandle(),
+        apiUrl: origin ? `${origin}${PUBLIC_ENVIO_API_PATH}` : PUBLIC_ENVIO_API_PATH,
+        pageUrl: origin
+          ? `${origin}${PUBLIC_SHIPPING_PAGE_PATH}`
+          : PUBLIC_SHIPPING_PAGE_PATH,
+      });
     } catch (error) {
       next(error);
     }
