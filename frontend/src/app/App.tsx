@@ -18,16 +18,20 @@ const App = () => {
 
   useEffect(() => {
     if (isInstalling) {
+      console.info("[auth/frontend] Esperando redirect de instalacion OAuth");
       return;
     }
 
     if (!isConnect) {
+      console.info("[auth/frontend] Conectando Nexo...");
       connect(nexo)
         .then(async () => {
+          console.info("[auth/frontend] Nexo conectado correctamente");
           setIsConnect(true);
           iAmReady(nexo);
         })
-        .catch(() => {
+        .catch((error) => {
+          console.error("[auth/frontend] Error conectando Nexo", error);
           setIsConnect(false);
         });
     }

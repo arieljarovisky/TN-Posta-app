@@ -13,10 +13,13 @@ dotenv.config({
 
 import { AppRoutes } from "@config";
 import {
+  authRequestLoggerMiddleware,
   beforeCheckClientMiddleware,
   errorHandlingMiddleware,
+  logStartupState,
 } from "@middlewares";
 import "./utils/passaport-strategy";
+import { logEnvStatus } from "@utils/logger";
 
 const port = process.env.PORT || 7200;
 const app = express();
@@ -27,6 +30,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cors());
+app.use(authRequestLoggerMiddleware);
 app.use(beforeCheckClientMiddleware);
 app.use(AppRoutes);
 
@@ -47,6 +51,10 @@ if (fs.existsSync(frontendDist)) {
 }
 
 app.use(errorHandlingMiddleware);
+
+logEnvStatus();
+logStartupState();
+
 app.listen(port, () => {
   console.log(`Server started on port ${port}`);
 

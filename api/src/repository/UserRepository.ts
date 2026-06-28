@@ -26,6 +26,15 @@ const database = low(adapter);
 
 class UserRepository {
   save(credential: TiendanubeAuthInterface) {
+    console.info(
+      "[auth/repository] Guardando credenciales",
+      JSON.stringify({
+        storeId: credential.user_id,
+        scope: credential.scope,
+        hasAccessToken: Boolean(credential.access_token),
+      })
+    );
+
     this.createOrUpdate(credential);
   }
 
@@ -53,6 +62,21 @@ class UserRepository {
   hasCredentials(): boolean {
     const credentials = database.get("credentials").value() ?? [];
     return credentials.some((credential) => Boolean(credential.access_token));
+  }
+
+  getCredentialsSummary(): {
+    count: number;
+    stores: Array<{ store_id: number; scope?: string }>;
+  } {
+    const credentials = database.get("credentials").value() ?? [];
+
+    return {
+      count: credentials.length,
+      stores: credentials.map((credential) => ({
+        store_id: Number(credential.user_id),
+        scope: credential.scope,
+      })),
+    };
   }
 
   deleteByStoreId(storeId: number): void {

@@ -1,5 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
+import fs from "fs";
+import path from "path";
+
 import { BadRequestException, HttpErrorException } from "@utils";
+import { logError, logInfo } from "@utils/logger";
 
 export const errorHandlingMiddleware = (
   err: any,
@@ -10,6 +14,13 @@ export const errorHandlingMiddleware = (
   if (!err) {
     return next();
   }
+
+  logError("error", "Error capturado por middleware", err, {
+    method: req.method,
+    path: req.path,
+    originalUrl: req.originalUrl,
+    query: req.query,
+  });
 
   if (err instanceof HttpErrorException) {
     return res.status(err.statusCode).json(err);
@@ -29,4 +40,14 @@ export const errorHandlingMiddleware = (
   );
 
   return res.status(payload.statusCode).json(payload);
+};
+
+export const logStartupState = (): void => {
+  const dbPath = path.resolve("db.json");
+
+  logInfo("startup", "Estado db.json al iniciar", {
+    dbPath,
+    dbExists: fs.existsSync(dbPath),
+    cwd: process.cwd(),
+  });
 };

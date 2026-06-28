@@ -1,31 +1,60 @@
 import { NextFunction, Request, Response } from "express";
+import fs from "fs";
+import path from "path";
+
 import { StatusCode } from "@utils";
 import { InstallAppService, AuthService } from "@features/auth";
 import { userRepository } from "@repository";
+import { logError, logInfo, maskCode } from "@utils/logger";
 
 class AuthenticationController {
   async install(
     req: Request,
     res: Response,
-    next: NextFunction
+    _next: NextFunction
   ): Promise<Response | void> {
-    try {
-      const code = req.query.code as string;
+    const code = req.query.code as string | undefined;
 
+    logInfo("auth/install", "Callback de instalacion recibido", {
+      hasCode: Boolean(code),
+      code: maskCode(code),
+      state: req.query.state ?? null,
+      queryKeys: Object.keys(req.query),
+      referer: req.get("referer") ?? null,
+      userAgent: req.get("user-agent") ?? null,
+    });
+
+    try {
       if (!code) {
+        logError("auth/install", "Callback sin codigo OAuth", undefined, {
+          query: req.query,
+        });
         return res.redirect("/?install=missing_code");
       }
 
-    await InstallAppService.install(code);
-    console.info("[auth/install] Instalacion completada correctamente");
-    return res.redirect("/?installed=1");
-  } catch (e) {
-    console.error("[auth/install] Error de instalacion:", e);
+      const credentials = await InstallAppService.install(code);
+
+      logInfo("auth/install", "Instalacion completada, redirigiendo al home", {
+        storeId: credentials.user_id,
+      });
+
+      return res.redirect("/?installed=1");
+    } catch (e) {
+      logError("auth/install", "Instalacion fallida", e, {
+        code: maskCode(code),
+      });
+
       const message =
         e instanceof Error ? e.message : "No se pudo completar la instalacion";
+      const description =
+        e instanceof Error && "description" in e
+          ? String((e as { description?: string }).description ?? "")
+          : "";
 
       return res.redirect(
-        `/?install_error=${encodeURIComponent(message)}`
+        `/?install_error=${encodeURIComponent(
+          description ? `${message}: ${description}` : message
+        )}`
       );
     }
   }
@@ -36,11 +65,50 @@ class AuthenticationController {
     next: NextFunction
   ): Promise<Response | void> {
     try {
-      const credentials = userRepository.findFirst();
+      const summary = userRepository.getCredentialsSummary();
+
+      logInfo("auth/status", "Consulta de estado de instalacion", summary);
 
       return res.status(StatusCode.OK).json({
-        installed: Boolean(credentials?.access_token),
-        store_id: credentials?.user_id ?? null,
+        installed: summary.count > 0,
+        store_id: summary.stores[0]?.store_id ?? null,
+        stores: summary.stores,
+      });
+    } catch (e) {
+      return next(e);
+    }
+  }
+
+  async debug(
+    _req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const dbPath = path.resolve("db.json");
+      const summary = userRepository.getCredentialsSummary();
+
+      return res.status(StatusCode.OK).json({
+        env: {
+          CLIENT_ID: process.env.CLIENT_ID ?? null,
+          CLIENT_EMAIL: process.env.CLIENT_EMAIL ?? null,
+          hasClientSecret: Boolean(process.env.CLIENT_SECRET),
+          hasSecretKey: Boolean(process.env.SECRET_KEY),
+          TIENDANUBE_AUTENTICATION_URL:
+            process.env.TIENDANUBE_AUTENTICATION_URL ?? null,
+          TIENDANUBE_API_URL: process.env.TIENDANUBE_API_URL ?? null,
+          NODE_ENV: process.env.NODE_ENV ?? null,
+          PORT: process.env.PORT ?? null,
+        },
+        db: {
+          path: dbPath,
+          exists: fs.existsSync(dbPath),
+          credentialsCount: summary.count,
+          stores: summary.stores,
+        },
+        installUrl:
+          "https://www.tiendanube.com/apps/35321/authorize?state=install",
+        callbackUrl: "/auth/install",
       });
     } catch (e) {
       return next(e);

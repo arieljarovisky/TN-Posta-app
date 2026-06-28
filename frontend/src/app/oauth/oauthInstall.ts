@@ -1,4 +1,9 @@
 const redirectToInstall = (code: string) => {
+  console.info("[auth/frontend] Redirigiendo code OAuth a /auth/install", {
+    codeLength: code.length,
+    fromPath: window.location.pathname,
+  });
+
   window.location.replace(
     `/auth/install?code=${encodeURIComponent(code)}`
   );
