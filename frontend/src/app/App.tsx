@@ -14,9 +14,7 @@ import "./I18n";
 
 const App = () => {
   const [isConnect, setIsConnect] = useState(false);
-  const [isInstalling, setIsInstalling] = useState(
-    () => completeOAuthInstallIfNeeded()
-  );
+  const [isInstalling] = useState(() => completeOAuthInstallIfNeeded());
 
   useEffect(() => {
     if (isInstalling) {

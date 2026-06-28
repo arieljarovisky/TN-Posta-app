@@ -38,7 +38,7 @@ const Home = () => {
         id: crypto.randomUUID(),
         type: "success",
         text: "Aplicacion instalada correctamente.",
-        duration: 5000,
+        duration: 4000,
       });
       clearInstallParamsFromUrl();
     }
@@ -48,7 +48,7 @@ const Home = () => {
         id: crypto.randomUUID(),
         type: "danger",
         text: "Falta el codigo de autorizacion. Reinstala la app desde el portal.",
-        duration: 6000,
+        duration: 8000,
       });
       clearInstallParamsFromUrl();
     }
@@ -58,7 +58,7 @@ const Home = () => {
         id: crypto.randomUUID(),
         type: "danger",
         text: decodeURIComponent(status.error),
-        duration: 6000,
+        duration: 8000,
       });
       clearInstallParamsFromUrl();
     }
