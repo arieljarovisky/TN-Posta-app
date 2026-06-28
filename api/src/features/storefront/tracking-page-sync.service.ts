@@ -15,6 +15,8 @@ type TiendanubePage = {
   handle?: Record<string, string>;
   name?: Record<string, string>;
   content?: Record<string, string>;
+  seo_title?: Record<string, string>;
+  seo_description?: Record<string, string>;
 };
 
 type TiendanubePagesResponse = {
@@ -43,6 +45,9 @@ const pageHandlesMatch = (page: TiendanubePage, handle: string): boolean =>
     (value) => value?.toLowerCase() === handle.toLowerCase()
   );
 
+const isValidLanguageKey = (key: string): boolean =>
+  /^[a-z]{2}(_[A-Z]{2})?$/i.test(key.trim());
+
 const collectLanguageKeys = (
   store: TiendanubeStore,
   existingPage?: TiendanubePage
@@ -54,29 +59,40 @@ const collectLanguageKeys = (
     existingPage?.handle,
     existingPage?.content,
   ]) {
-    Object.keys(field ?? {}).forEach((language) => keys.add(language));
+    Object.keys(field ?? {}).forEach((language) => {
+      if (isValidLanguageKey(language)) {
+        keys.add(language.trim());
+      }
+    });
   }
 
-  if (typeof store.main_language === "string" && store.main_language.trim()) {
+  if (keys.size > 0) {
+    return [...keys];
+  }
+
+  if (typeof store.main_language === "string" && isValidLanguageKey(store.main_language)) {
     keys.add(store.main_language.trim());
   }
 
   if (Array.isArray(store.languages)) {
     store.languages
       .filter((language): language is string => typeof language === "string")
+      .filter((language) => isValidLanguageKey(language))
       .forEach((language) => keys.add(language.trim()));
   } else if (store.languages && typeof store.languages === "object") {
-    Object.keys(store.languages).forEach((language) => keys.add(language));
+    Object.keys(store.languages)
+      .filter((language) => isValidLanguageKey(language))
+      .forEach((language) => keys.add(language));
   }
 
   if (keys.size === 0) {
-    keys.add(store.country === "AR" ? "es_AR" : "es");
+    keys.add(store.country === "AR" ? "es" : "es");
   }
 
   return [...keys];
 };
 
-const buildPagePayload = (
+const buildCreatePagePayload = (
   languageKeys: string[],
   title: string,
   content: string,
@@ -99,6 +115,47 @@ const buildPagePayload = (
       publish: true,
       i18n,
     },
+  };
+};
+
+const buildUpdatePagePayload = (
+  languageKeys: string[],
+  title: string,
+  content: string,
+  seoHandle: string,
+  existingPage?: TiendanubePage
+) => {
+  const name: Record<string, string> = { ...(existingPage?.name ?? {}) };
+  const pageContent: Record<string, string> = { ...(existingPage?.content ?? {}) };
+  const handle: Record<string, string> = { ...(existingPage?.handle ?? {}) };
+  const seoTitle: Record<string, string> = { ...(existingPage?.seo_title ?? {}) };
+  const seoDescription: Record<string, string> = {
+    ...(existingPage?.seo_description ?? {}),
+  };
+
+  for (const language of languageKeys) {
+    name[language] = title;
+    pageContent[language] = content;
+    handle[language] = seoHandle;
+    seoTitle[language] = title;
+    seoDescription[language] = "Consulta el estado de tu envio con tu codigo TPA.";
+  }
+
+  if (languageKeys.length <= 1) {
+    return {
+      published: true,
+      title,
+      content,
+    };
+  }
+
+  return {
+    published: true,
+    name,
+    content: pageContent,
+    handle,
+    seo_title: seoTitle,
+    seo_description: seoDescription,
   };
 };
 
@@ -136,13 +193,18 @@ const extractApiErrorMessage = (error: unknown): string => {
   return "";
 };
 
+const decodeApiErrorText = (value: string): string =>
+  value.replace(/\\u([0-9a-fA-F]{4})/g, (_match, hex: string) =>
+    String.fromCharCode(parseInt(hex, 16))
+  );
+
 const formatApiErrorText = (value: unknown): string => {
   if (Array.isArray(value)) {
-    return value.map((item) => String(item)).join(" ");
+    return value.map((item) => decodeApiErrorText(String(item))).join(" ");
   }
 
   if (typeof value === "string") {
-    return value;
+    return decodeApiErrorText(value);
   }
 
   if (typeof value === "object") {
@@ -249,12 +311,35 @@ class TrackingPageSyncService {
     languageKeys: string[],
     title: string,
     content: string,
-    seoHandle: string
+    seoHandle: string,
+    existingPage?: TiendanubePage
   ): Promise<void> {
-    await tiendanubeContentApiClient.put(
-      `${storeId}/pages/${pageId}`,
-      buildPagePayload(languageKeys, title, content, seoHandle)
-    );
+    const payloads = [
+      buildUpdatePagePayload(
+        languageKeys,
+        title,
+        content,
+        seoHandle,
+        existingPage
+      ),
+      { published: true, title, content },
+    ];
+
+    let lastError: unknown;
+
+    for (const payload of payloads) {
+      try {
+        await tiendanubeContentApiClient.put(
+          `${storeId}/pages/${pageId}`,
+          payload
+        );
+        return;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError;
   }
 
   private async createPage(
@@ -266,7 +351,7 @@ class TrackingPageSyncService {
   ): Promise<TiendanubePage> {
     return (await tiendanubeContentApiClient.post(
       `${storeId}/pages`,
-      buildPagePayload(languageKeys, title, content, seoHandle)
+      buildCreatePagePayload(languageKeys, title, content, seoHandle)
     )) as TiendanubePage;
   }
 
@@ -320,7 +405,15 @@ class TrackingPageSyncService {
       });
 
       if (pageId) {
-        await this.updatePage(storeId, pageId, languageKeys, title, content, handle);
+        await this.updatePage(
+          storeId,
+          pageId,
+          languageKeys,
+          title,
+          content,
+          handle,
+          existing
+        );
 
         logInfo("tracking-page-sync", "Pagina de seguimiento actualizada", {
           storeId,
