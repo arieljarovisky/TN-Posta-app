@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import fs from "fs";
-import path from "path";
 
 import { getExpectedCallbackUrl, getOAuthInstallUrl } from "@config/oauth-urls";
+import { getDatabasePath } from "@config/database";
 import { InstallAppService, AuthService } from "@features/auth";
 import { userRepository } from "@repository";
 import { StatusCode } from "@utils";
@@ -86,15 +86,45 @@ class AuthenticationController {
     next: NextFunction
   ): Promise<Response | void> {
     try {
-      const dbPath = path.resolve("db.json");
+      const dbPath = getDatabasePath();
       const summary = userRepository.getCredentialsSummary();
+      const callbackUrl = getExpectedCallbackUrl();
+      const warnings: string[] = [];
+
+      if (!process.env.APP_PUBLIC_URL) {
+        warnings.push(
+          "Falta APP_PUBLIC_URL en Railway. Configurala como https://tn-posta-app-production.up.railway.app"
+        );
+      }
+
+      if (summary.count === 0) {
+        warnings.push(
+          "La tienda no esta conectada (credentialsCount=0). Abri installUrl y completa OAuth."
+        );
+      }
+
+      if (!process.env.DATABASE_PATH) {
+        warnings.push(
+          "Falta DATABASE_PATH=/data/db.json con volumen en Railway. Las credenciales se pierden en cada deploy."
+        );
+      }
+
+      if (callbackUrl.startsWith("/")) {
+        warnings.push(
+          `En el Partner Portal la redirect URL debe ser la URL completa, no solo ${callbackUrl}`
+        );
+      }
 
       return res.status(StatusCode.OK).json({
+        ok: summary.count > 0 && Boolean(process.env.APP_PUBLIC_URL),
         env: {
           CLIENT_ID: process.env.CLIENT_ID ?? null,
           CLIENT_EMAIL: process.env.CLIENT_EMAIL ?? null,
           hasClientSecret: Boolean(process.env.CLIENT_SECRET),
           hasSecretKey: Boolean(process.env.SECRET_KEY),
+          APP_PUBLIC_URL: process.env.APP_PUBLIC_URL ?? null,
+          STORE_SLUG: process.env.STORE_SLUG ?? null,
+          DATABASE_PATH: process.env.DATABASE_PATH ?? null,
           TIENDANUBE_AUTENTICATION_URL:
             process.env.TIENDANUBE_AUTENTICATION_URL ?? null,
           TIENDANUBE_API_URL: process.env.TIENDANUBE_API_URL ?? null,
@@ -108,7 +138,11 @@ class AuthenticationController {
           stores: summary.stores,
         },
         installUrl: getOAuthInstallUrl(),
-        callbackUrl: getExpectedCallbackUrl(),
+        callbackUrl,
+        partnerPortalRedirectUrl: callbackUrl.startsWith("http")
+          ? callbackUrl
+          : "https://tn-posta-app-production.up.railway.app/auth/install",
+        warnings,
       });
     } catch (e) {
       return next(e);
