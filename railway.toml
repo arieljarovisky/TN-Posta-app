@@ -6,3 +6,9 @@ dockerfilePath = "Dockerfile"
 startCommand = "node api/start-prod.js"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
+
+# Volumen persistente: credenciales OAuth, settings (activo/tarifas), envios, codigos TPA.
+# En Railway: crear volumen "tn-posta-data" y montarlo en /data (Settings → Volumes).
+[[deploy.mounts]]
+volumeName = "tn-posta-data"
+mountPath = "/data"

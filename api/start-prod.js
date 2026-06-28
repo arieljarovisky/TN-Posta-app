@@ -12,8 +12,10 @@ if (!fs.existsSync(path.dirname(dbPath))) {
 }
 
 if (!fs.existsSync(dbPath)) {
+  console.log(`[db] Creando base nueva en ${dbPath}`);
   fs.copyFileSync(dbExamplePath, dbPath);
 } else {
+  console.log(`[db] Usando base persistente en ${dbPath}`);
   const db = JSON.parse(fs.readFileSync(dbPath, "utf8"));
 
   if (!Array.isArray(db.shipments)) {
