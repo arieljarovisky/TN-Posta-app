@@ -25,6 +25,7 @@ const frontendDist = path.resolve(process.cwd(), "../frontend/dist");
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms")
 );
+app.use(express.json());
 app.use(cors());
 app.use(beforeCheckClientMiddleware);
 app.use(AppRoutes);

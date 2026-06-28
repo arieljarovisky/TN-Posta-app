@@ -50,6 +50,16 @@ class UserRepository {
     return database.get("credentials").value()?.[0];
   }
 
+  deleteByStoreId(storeId: number): void {
+    const credentials =
+      database
+        .get("credentials")
+        .value()
+        ?.filter((credential) => credential.user_id !== Number(storeId)) ?? [];
+
+    database.set("credentials", credentials).write();
+  }
+
   private createOrUpdate(data: TiendanubeAuthInterface) {
     const credentials = database.get("credentials").value() ?? [];
     const hasCredentials = this.findValueFromProperty<TiendanubeAuthInterface>(

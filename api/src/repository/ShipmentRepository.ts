@@ -60,6 +60,31 @@ class ShipmentRepository {
 
     return updated;
   }
+
+  deleteByStoreId(storeId: number): void {
+    const shipments =
+      database
+        .get("shipments")
+        .value()
+        ?.filter((shipment) => shipment.store_id !== Number(storeId)) ?? [];
+
+    database.set("shipments", shipments).write();
+  }
+
+  deleteByOrderIds(storeId: number, orderIds: number[]): void {
+    const orderIdSet = new Set(orderIds.map(Number));
+    const shipments =
+      database
+        .get("shipments")
+        .value()
+        ?.filter(
+          (shipment) =>
+            shipment.store_id !== Number(storeId) ||
+            !orderIdSet.has(shipment.order_id)
+        ) ?? [];
+
+    database.set("shipments", shipments).write();
+  }
 }
 
 export default new ShipmentRepository();

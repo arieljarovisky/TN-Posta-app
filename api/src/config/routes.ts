@@ -5,11 +5,19 @@ import { AuthenticationController } from "@features/auth";
 import { OrderController } from "@features/order";
 import { ProductController } from "@features/product";
 import { ShipmentController } from "@features/shipment";
+import { WebhookController } from "@features/webhook";
 
 const routes = Router();
 const apiRoutes = Router();
 
 routes.get("/auth/install", AuthenticationController.install);
+
+routes.post("/webhooks/store/redact", WebhookController.storeRedact);
+routes.post("/webhooks/customers/redact", WebhookController.customersRedact);
+routes.post(
+  "/webhooks/customers/data_request",
+  WebhookController.customersDataRequest
+);
 
 apiRoutes.get(
   "/orders",
