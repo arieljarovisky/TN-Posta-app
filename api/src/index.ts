@@ -17,6 +17,7 @@ import {
   beforeCheckClientMiddleware,
   errorHandlingMiddleware,
   logStartupState,
+  oauthCallbackLoggerMiddleware,
 } from "@middlewares";
 import "./utils/passaport-strategy";
 import { logEnvStatus } from "@utils/logger";
@@ -30,6 +31,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cors());
+app.use(oauthCallbackLoggerMiddleware);
 app.use(authRequestLoggerMiddleware);
 app.use(beforeCheckClientMiddleware);
 app.use(AppRoutes);
