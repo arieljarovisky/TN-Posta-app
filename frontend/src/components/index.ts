@@ -3,3 +3,4 @@ export { default as ReinstallStoreAlert } from "./ReinstallStoreAlert/ReinstallS
 export { default as ShippingRatesEditor } from "./ShippingRatesEditor/ShippingRatesEditor";
 export { default as ZoneCoveragePanel } from "./ZoneCoveragePanel/ZoneCoveragePanel";
 export { ZoneLocalitiesPreview } from "./ZoneCoveragePanel/ZoneCoveragePanel";
+export { default as ShippingPublishAlert } from "./ShippingPublishAlert/ShippingPublishAlert";

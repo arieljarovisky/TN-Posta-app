@@ -18,7 +18,7 @@ import {
 import { LocationIcon, TruckIcon } from "@nimbus-ds/icons";
 
 import { nexo } from "@/app";
-import { ReinstallStoreAlert, ShippingRatesEditor, ZoneCoveragePanel } from "@/components";
+import { ReinstallStoreAlert, ShippingPublishAlert, ShippingRatesEditor, ZoneCoveragePanel } from "@/components";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useZoneCoverage } from "@/hooks/useZoneCoverage";
 import { ShippingRateRule } from "@/types/shipping";
@@ -39,6 +39,7 @@ const Home = () => {
     loadError,
     connected,
     carrierName,
+    carrierId,
     shippingRates,
     shippingSyncMessage,
     toggleEnabled,
@@ -255,6 +256,14 @@ const Home = () => {
               <Card>
                 <Card.Header title={t("home.shippingRatesTitle")} />
                 <Card.Body>
+                  <ShippingPublishAlert
+                    carrierId={carrierId}
+                    carrierName={carrierName}
+                    connected={connected}
+                    enabled={enabled}
+                    syncMessage={shippingSyncMessage}
+                  />
+                  <Box paddingTop="3">
                   <ShippingRatesEditor
                     carrierName={carrierNameInput}
                     rates={ratesInput}
@@ -272,6 +281,7 @@ const Home = () => {
                       </Text>
                     </Box>
                   )}
+                  </Box>
                 </Card.Body>
               </Card>
 

@@ -10,6 +10,7 @@ export const useStoreSettings = () => {
   const [enabled, setEnabled] = useState(false);
   const [connected, setConnected] = useState(true);
   const [carrierName, setCarrierName] = useState("TN Posta");
+  const [carrierId, setCarrierId] = useState<number | null>(null);
   const [shippingRates, setShippingRates] = useState<ShippingRateRule[]>([]);
   const [shippingOptionNames, setShippingOptionNames] = useState<string[]>([]);
   const [shippingSyncMessage, setShippingSyncMessage] = useState<string | null>(
@@ -28,6 +29,7 @@ export const useStoreSettings = () => {
       setEnabled(data.enabled);
       setConnected(data.connected);
       setCarrierName(data.carrier_name ?? "TN Posta");
+      setCarrierId(data.carrier_id ?? null);
       setShippingRates(data.shipping_rates ?? []);
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
@@ -54,6 +56,7 @@ export const useStoreSettings = () => {
       setEnabled(data.enabled);
       setConnected(data.connected);
       setCarrierName(data.carrier_name ?? carrierName);
+      setCarrierId(data.carrier_id ?? null);
       setShippingRates(data.shipping_rates ?? []);
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
@@ -75,6 +78,7 @@ export const useStoreSettings = () => {
     try {
       const data = await updateStoreSettings(payload);
       setCarrierName(data.carrier_name ?? payload.carrier_name);
+      setCarrierId(data.carrier_id ?? null);
       setShippingRates(data.shipping_rates ?? []);
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
@@ -91,6 +95,7 @@ export const useStoreSettings = () => {
     enabled,
     connected,
     carrierName,
+    carrierId,
     shippingRates,
     shippingOptionNames,
     shippingSyncMessage,

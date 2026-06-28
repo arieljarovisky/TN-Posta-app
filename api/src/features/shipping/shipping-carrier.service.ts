@@ -104,7 +104,7 @@ class ShippingCarrierService {
     } catch (error) {
       logError(
         "shipping/carrier",
-        "No se pudo crear el carrier (requiere scope write_shipping)",
+        "No se pudo crear el carrier (requiere permiso Edit Shipping en Partner Portal)",
         error,
         { storeId }
       );
@@ -131,7 +131,7 @@ class ShippingCarrierService {
       return {
         synced: false,
         message:
-          "Las tarifas se guardaron localmente. Para publicarlas en el checkout, habilita write_shipping en el Partner Portal y reconecta la tienda.",
+          "Las tarifas se guardaron localmente. Para publicarlas en el checkout, activa Edit Shipping en el Partner Portal y reconecta la tienda (OAuth).",
       };
     }
 
@@ -197,7 +197,7 @@ class ShippingCarrierService {
         synced: false,
         carrierId,
         message:
-          "Las tarifas se guardaron, pero no se pudieron sincronizar con Tiendanube. Verifica permisos write_shipping.",
+          "Las tarifas se guardaron, pero no se pudieron sincronizar con Tiendanube. Verifica Edit Shipping y reconecta la tienda.",
       };
     }
   }
