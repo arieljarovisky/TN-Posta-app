@@ -12,11 +12,19 @@ export const tiendanubeApiClient = axios.create({
 
 tiendanubeApiClient.interceptors.request.use(
   (config) => {
-    // Do something before request is sent
-    const { access_token } = userRepository.findOne(
-      +config.url?.split("/")[0]!!
-    );
-    config.headers["Authorization"] = `Bearer ${access_token}`;
+    const storeId = +config.url?.split("/")[0]!!;
+    const credentials = userRepository.findOptional(storeId);
+
+    if (!credentials?.access_token) {
+      return Promise.reject(
+        new HttpErrorException(
+          "Tienda no autorizada",
+          "Reinstala la app desde Tiendanube para volver a conectar la tienda."
+        ).setStatusCode(401)
+      );
+    }
+
+    config.headers["Authorization"] = `Bearer ${credentials.access_token}`;
     return config;
   },
   function (error) {

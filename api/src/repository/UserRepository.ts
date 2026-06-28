@@ -39,12 +39,7 @@ class UserRepository {
   }
 
   findOne(user_id: number) {
-    const credentials = database.get("credentials").value();
-    const store = this.findValueFromProperty<TiendanubeAuthInterface, number>(
-      "user_id",
-      credentials,
-      user_id
-    );
+    const store = this.findOptional(user_id);
 
     if (!store) {
       throw new HttpErrorException(
@@ -53,6 +48,16 @@ class UserRepository {
     }
 
     return store;
+  }
+
+  findOptional(user_id: number): TiendanubeAuthInterface | undefined {
+    const credentials = database.get("credentials").value();
+
+    return this.findValueFromProperty<TiendanubeAuthInterface, number>(
+      "user_id",
+      credentials,
+      user_id
+    );
   }
 
   findFirst(): TiendanubeAuthInterface {

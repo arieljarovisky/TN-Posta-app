@@ -29,7 +29,7 @@ const Home = () => {
   const { t } = useTranslation("translations");
   const { addToast } = useToast();
   const [searchParams] = useSearchParams();
-  const { enabled, loading, saving, toggleEnabled } = useStoreSettings();
+  const { enabled, loading, saving, loadError, toggleEnabled } = useStoreSettings();
 
   useEffect(() => {
     navigateHeaderRemove(nexo);
@@ -101,6 +101,12 @@ const Home = () => {
             <Box display="flex" flexDirection="column" gap="4">
               <Text>{t("home.description")}</Text>
 
+              {loadError && (
+                <Alert appearance="danger" title="Error de configuracion">
+                  <Text>{loadError}</Text>
+                </Alert>
+              )}
+
               <Card>
                 <Card.Header title={t("home.serviceStatus")} />
                 <Card.Body>
@@ -124,7 +130,7 @@ const Home = () => {
                         <Toggle
                           name="service-enabled"
                           active={enabled}
-                          disabled={saving}
+                          disabled={saving || Boolean(loadError)}
                           onChange={handleToggle}
                         />
                       )}
