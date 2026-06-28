@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { navigateHeaderRemove } from "@tiendanube/nexo";
@@ -8,6 +8,8 @@ import {
   Box,
   Button,
   Card,
+  Input,
+  Label,
   Spinner,
   Tag,
   Text,
@@ -30,12 +32,21 @@ const Home = () => {
   const { t } = useTranslation("translations");
   const { addToast } = useToast();
   const [searchParams] = useSearchParams();
-  const { enabled, loading, saving, loadError, connected, toggleEnabled } =
-    useStoreSettings();
+  const {
+    enabled,
+    loading,
+    saving,
+    loadError,
+    connected,
+    shippingOptionNames,
+    toggleEnabled,
+    saveShippingOptionNames,
+  } = useStoreSettings();
+  const [shippingNamesInput, setShippingNamesInput] = useState("");
 
   useEffect(() => {
-    navigateHeaderRemove(nexo);
-  }, []);
+    setShippingNamesInput(shippingOptionNames.join(", "));
+  }, [shippingOptionNames]);
 
   useEffect(() => {
     const status = getInstallStatusFromUrl();
@@ -70,6 +81,36 @@ const Home = () => {
       clearInstallParamsFromUrl();
     }
   }, [addToast, searchParams]);
+
+  useEffect(() => {
+    navigateHeaderRemove(nexo);
+  }, []);
+
+  const handleSaveShippingNames = async () => {
+    const names = shippingNamesInput
+      .split(",")
+      .map((name) => name.trim())
+      .filter(Boolean);
+
+    const success = await saveShippingOptionNames(names);
+
+    if (success) {
+      addToast({
+        id: crypto.randomUUID(),
+        type: "success",
+        text: t("home.shippingNamesSaved"),
+        duration: 4000,
+      });
+      return;
+    }
+
+    addToast({
+      id: crypto.randomUUID(),
+      type: "danger",
+      text: t("errors.generic"),
+      duration: 4000,
+    });
+  };
 
   const handleToggle = async () => {
     const success = await toggleEnabled(!enabled);
@@ -157,6 +198,34 @@ const Home = () => {
                         ? t("home.activeDescription")
                         : t("home.inactiveDescription")}
                     </Text>
+
+                    <Box display="flex" flexDirection="column" gap="2">
+                      <Label htmlFor="shipping-names">
+                        {t("home.shippingNamesLabel")}
+                      </Label>
+                      <Input
+                        id="shipping-names"
+                        name="shipping-names"
+                        value={shippingNamesInput}
+                        disabled={saving || loading}
+                        placeholder={t("home.shippingNamesPlaceholder")}
+                        onChange={(event) =>
+                          setShippingNamesInput(event.target.value)
+                        }
+                      />
+                      <Text fontSize="caption" color="neutral-textLow">
+                        {t("home.shippingNamesHelp")}
+                      </Text>
+                      <Box>
+                        <Button
+                          appearance="neutral"
+                          disabled={saving || loading}
+                          onClick={handleSaveShippingNames}
+                        >
+                          {t("home.shippingNamesSave")}
+                        </Button>
+                      </Box>
+                    </Box>
                   </Box>
                 </Card.Body>
               </Card>

@@ -120,6 +120,11 @@ const Orders = () => {
             {order.destination.city}, {order.destination.province} - CP{" "}
             {order.destination.zipcode}
           </Text>
+          {order.shipping_method && (
+            <Tag appearance="neutral">
+              {t("orders.shippingMethod")}: {order.shipping_method}
+            </Tag>
+          )}
           {order.zone_eligibility.zone && (
             <Tag appearance="success">
               {t("orders.zone")}: {order.zone_eligibility.zone}

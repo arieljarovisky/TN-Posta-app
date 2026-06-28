@@ -6,10 +6,14 @@ import {
   toShippingAddressInput,
 } from "@features/order/order.mapper";
 import {
+  extractShippingSelection,
+  matchesAppShippingMethod,
+} from "@features/order/order-shipping";
+import {
   CreateShipmentRequest,
   Shipment,
 } from "@features/shipment/interfaces/shipment.interface";
-import { shipmentRepository } from "@repository";
+import { shipmentRepository, settingsRepository } from "@repository";
 import { BadRequestException } from "@utils";
 import { assertEligibleZone } from "@utils/zone";
 
@@ -90,6 +94,20 @@ class ShipmentService {
 
     const order = await OrderService.getOrderForShipment(storeId, payload.order_id);
     const shippingAddress = extractShippingAddress(order);
+    const shippingSelection = extractShippingSelection(order);
+    const storeSettings = settingsRepository.getByStoreId(storeId);
+    const shippingValidation = matchesAppShippingMethod(
+      shippingSelection,
+      storeSettings.shipping_option_names
+    );
+
+    if (!shippingValidation.matches) {
+      throw new BadRequestException(
+        "Metodo de envio invalido",
+        shippingValidation.reason ??
+          "El pedido no utilizo el metodo de envio configurado en TN Posta."
+      );
+    }
 
     if (!shippingAddress) {
       throw new BadRequestException(

@@ -20,6 +20,7 @@ class SettingsController {
       return res.status(StatusCode.OK).json({
         enabled: data.enabled,
         connected,
+        shipping_option_names: data.shipping_option_names ?? [],
         updated_at: data.updated_at,
       });
     } catch (error) {
@@ -35,17 +36,32 @@ class SettingsController {
     try {
       const payload = req.body as UpdateStoreSettingsRequest;
 
-      if (typeof payload.enabled !== "boolean") {
+      if (
+        payload.enabled !== undefined &&
+        typeof payload.enabled !== "boolean"
+      ) {
         throw new BadRequestException(
           "Invalid payload",
           "El campo enabled debe ser true o false"
         );
       }
 
-      const data = SettingsService.updateStoreSettings(
-        +req.user.user_id,
-        payload.enabled
-      );
+      if (
+        payload.shipping_option_names !== undefined &&
+        !Array.isArray(payload.shipping_option_names)
+      ) {
+        throw new BadRequestException(
+          "Invalid payload",
+          "shipping_option_names debe ser un array de strings"
+        );
+      }
+
+      const data = SettingsService.updateStoreSettings(+req.user.user_id, {
+        enabled: payload.enabled,
+        shipping_option_names: payload.shipping_option_names?.map((name) =>
+          String(name).trim()
+        ),
+      });
       const connected = Boolean(
         userRepository.findOptional(+req.user.user_id)?.access_token
       );
@@ -53,6 +69,7 @@ class SettingsController {
       return res.status(StatusCode.OK).json({
         enabled: data.enabled,
         connected,
+        shipping_option_names: data.shipping_option_names ?? [],
         updated_at: data.updated_at,
       });
     } catch (error) {

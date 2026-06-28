@@ -11,16 +11,8 @@ export interface TiendanubeShippingAddress {
   country?: string;
 }
 
-export interface TiendanubeOrder {
-  id: number;
-  number: number;
-  status: string;
-  created_at: string;
-  shipping_address?: TiendanubeShippingAddress;
-  fulfillments?: TiendanubeFulfillment[];
-}
-
-export interface TiendanubeFulfillment {
+export interface TiendanubeFulfillmentOrder {
+  id?: string;
   recipient?: {
     name?: string;
     phone?: string;
@@ -35,6 +27,34 @@ export interface TiendanubeFulfillment {
     zipcode?: string;
     country?: { name?: string } | string;
   };
+  shipping?: {
+    type?: string;
+    carrier?: {
+      carrier_id?: string;
+      code?: string;
+      name?: string;
+      app_id?: string | null;
+    };
+    option?: {
+      name?: string;
+      code?: string;
+      reference?: string | null;
+    };
+  };
+}
+
+export interface TiendanubeOrder {
+  id: number;
+  number: number;
+  status: string;
+  created_at: string;
+  shipping?: string;
+  shipping_option?: string;
+  shipping_option_code?: string;
+  shipping_option_reference?: string | null;
+  shipping_carrier_name?: string | null;
+  shipping_address?: TiendanubeShippingAddress;
+  fulfillment_orders?: TiendanubeFulfillmentOrder[];
 }
 
 export interface OrderSummary {
@@ -43,6 +63,7 @@ export interface OrderSummary {
   status: string;
   created_at: string;
   recipient_name: string;
+  shipping_method?: string;
   destination: {
     street: string;
     number: string;

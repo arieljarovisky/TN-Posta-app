@@ -8,9 +8,15 @@ class SettingsService {
 
   updateStoreSettings(
     storeId: number,
-    enabled: boolean
+    data: { enabled?: boolean; shipping_option_names?: string[] }
   ): StoreSettings {
-    return settingsRepository.setEnabled(storeId, enabled);
+    const current = settingsRepository.getByStoreId(storeId);
+
+    return settingsRepository.updateStoreSettings(storeId, {
+      enabled: data.enabled ?? current.enabled,
+      shipping_option_names:
+        data.shipping_option_names ?? current.shipping_option_names ?? [],
+    });
   }
 
   isServiceEnabled(storeId: number): boolean {

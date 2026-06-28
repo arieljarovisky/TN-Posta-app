@@ -32,7 +32,13 @@ const resources = {
         manageTitle: "Gestionar envios",
         ordersCard: "Ver pedidos elegibles",
         ordersCardHelp:
-          "Pedidos con direccion en CABA o GBA listos para crear un envio.",
+          "Solo pedidos donde el cliente eligio tu metodo de envio en CABA o GBA.",
+        shippingNamesLabel: "Nombre del envio en tu tienda",
+        shippingNamesPlaceholder: "Ej: Envios Posta, Envio CABA/GBA",
+        shippingNamesHelp:
+          "Debe coincidir con el nombre que figura en Tiendanube al checkout. Podes agregar varios separados por coma.",
+        shippingNamesSave: "Guardar nombre de envio",
+        shippingNamesSaved: "Nombre de envio guardado.",
         shipmentsCard: "Ver envios creados",
         shipmentsCardHelp:
           "Consulta envios ya creados y descarga las etiquetas en PDF.",
@@ -44,7 +50,8 @@ const resources = {
       },
       orders: {
         title: "Pedidos",
-        empty: "No hay pedidos elegibles en CABA o GBA.",
+        empty: "No hay pedidos elegibles con tu metodo de envio en CABA o GBA.",
+        shippingMethod: "Envio elegido",
         serviceDisabled: "Activa TN Posta desde la pantalla principal para ver pedidos.",
         reconnectRequired:
           "La tienda no esta conectada. Reconectala para consultar pedidos de Tiendanube.",

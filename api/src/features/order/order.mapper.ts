@@ -1,8 +1,9 @@
 import {
-  TiendanubeFulfillment,
+  TiendanubeFulfillmentOrder,
   TiendanubeOrder,
   TiendanubeShippingAddress,
 } from "@features/order/interfaces/order.interface";
+import { getFulfillmentOrders } from "@features/order/order-shipping";
 import { ShippingAddressInput } from "@utils/zone";
 
 export const extractShippingAddress = (
@@ -12,7 +13,7 @@ export const extractShippingAddress = (
     return order.shipping_address;
   }
 
-  const fulfillment = order.fulfillments?.find(
+  const fulfillment = getFulfillmentOrders(order).find(
     (item) => item.destination?.city && item.destination?.province
   );
 
@@ -33,7 +34,7 @@ export const toShippingAddressInput = (
 });
 
 const mapFulfillmentToShippingAddress = (
-  fulfillment: TiendanubeFulfillment
+  fulfillment: TiendanubeFulfillmentOrder
 ): TiendanubeShippingAddress => {
   const destination = fulfillment.destination!;
   const province =

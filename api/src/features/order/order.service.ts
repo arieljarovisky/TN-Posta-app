@@ -1,5 +1,5 @@
 import { tiendanubeApiClient } from "@config";
-import { shipmentRepository } from "@repository";
+import { settingsRepository, shipmentRepository } from "@repository";
 import {
   OrderSummary,
   TiendanubeOrder,
@@ -8,6 +8,10 @@ import {
   extractShippingAddress,
   toShippingAddressInput,
 } from "@features/order/order.mapper";
+import {
+  extractShippingSelection,
+  matchesAppShippingMethod,
+} from "@features/order/order-shipping";
 import { HttpErrorException } from "@utils";
 import { validateDeliveryZone } from "@utils/zone";
 
@@ -17,7 +21,10 @@ class OrderService {
     eligibleOnly = false
   ): Promise<OrderSummary[]> {
     const orders = await this.fetchOrders(storeId);
-    const summaries = orders.map((order) => this.toOrderSummary(storeId, order));
+    const storeSettings = settingsRepository.getByStoreId(storeId);
+    const summaries = orders.map((order) =>
+      this.toOrderSummary(storeId, order, storeSettings.shipping_option_names)
+    );
 
     if (!eligibleOnly) {
       return summaries;
@@ -33,7 +40,13 @@ class OrderService {
       throw new HttpErrorException("Pedido no encontrado").setStatusCode(404);
     }
 
-    return this.toOrderSummary(storeId, order);
+    const storeSettings = settingsRepository.getByStoreId(storeId);
+
+    return this.toOrderSummary(
+      storeId,
+      order,
+      storeSettings.shipping_option_names
+    );
   }
 
   async getOrderForShipment(
@@ -77,9 +90,18 @@ class OrderService {
     }
   }
 
-  private toOrderSummary(storeId: number, order: TiendanubeOrder): OrderSummary {
+  private toOrderSummary(
+    storeId: number,
+    order: TiendanubeOrder,
+    shippingOptionNames?: string[]
+  ): OrderSummary {
     const shippingAddress = extractShippingAddress(order);
+    const shippingSelection = extractShippingSelection(order);
     const existingShipment = shipmentRepository.findByOrderId(storeId, order.id);
+    const shippingMethodLabel =
+      shippingSelection?.option_name ??
+      shippingSelection?.option_code ??
+      shippingSelection?.carrier_name;
 
     if (!shippingAddress) {
       return {
@@ -88,6 +110,7 @@ class OrderService {
         status: order.status,
         created_at: order.created_at,
         recipient_name: "Sin direccion",
+        shipping_method: shippingMethodLabel,
         destination: {
           street: "",
           number: "",
@@ -103,9 +126,20 @@ class OrderService {
       };
     }
 
-    const zoneEligibility = validateDeliveryZone(
+    const zoneValidation = validateDeliveryZone(
       toShippingAddressInput(shippingAddress)
     );
+    const shippingValidation = matchesAppShippingMethod(
+      shippingSelection,
+      shippingOptionNames
+    );
+
+    const eligible = zoneValidation.eligible && shippingValidation.matches;
+    const reason = !zoneValidation.eligible
+      ? zoneValidation.reason
+      : !shippingValidation.matches
+        ? shippingValidation.reason
+        : undefined;
 
     return {
       id: order.id,
@@ -113,6 +147,7 @@ class OrderService {
       status: order.status,
       created_at: order.created_at,
       recipient_name: shippingAddress.name,
+      shipping_method: shippingMethodLabel,
       destination: {
         street: shippingAddress.address,
         number: shippingAddress.number,
@@ -123,7 +158,11 @@ class OrderService {
         zipcode: shippingAddress.zipcode,
         phone: shippingAddress.phone,
       },
-      zone_eligibility: zoneEligibility,
+      zone_eligibility: {
+        eligible,
+        zone: zoneValidation.zone,
+        reason,
+      },
       has_shipment: Boolean(existingShipment),
     };
   }

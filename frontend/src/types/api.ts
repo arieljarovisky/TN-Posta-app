@@ -23,6 +23,7 @@ export interface OrderSummary {
     phone?: string;
   };
   zone_eligibility: ZoneEligibility;
+  shipping_method?: string;
   has_shipment: boolean;
 }
 

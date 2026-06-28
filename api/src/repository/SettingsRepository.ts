@@ -27,6 +27,7 @@ class SettingsRepository {
     return {
       store_id: Number(storeId),
       enabled: false,
+      shipping_option_names: [],
       updated_at: new Date().toISOString(),
     };
   }
@@ -35,19 +36,25 @@ class SettingsRepository {
     return this.getByStoreId(storeId).enabled;
   }
 
-  setEnabled(storeId: number, enabled: boolean): StoreSettings {
+  updateStoreSettings(
+    storeId: number,
+    data: Pick<StoreSettings, "enabled" | "shipping_option_names">
+  ): StoreSettings {
+    const existing = this.getByStoreId(storeId);
     const settings: StoreSettings = {
+      ...existing,
       store_id: Number(storeId),
-      enabled,
+      enabled: data.enabled,
+      shipping_option_names: data.shipping_option_names ?? existing.shipping_option_names ?? [],
       updated_at: new Date().toISOString(),
     };
 
-    const existing = database
+    const stored = database
       .get("store_settings")
       .find({ store_id: Number(storeId) })
       .value();
 
-    if (existing) {
+    if (stored) {
       database
         .get("store_settings")
         .find({ store_id: Number(storeId) })
@@ -58,6 +65,15 @@ class SettingsRepository {
     }
 
     return settings;
+  }
+
+  setEnabled(storeId: number, enabled: boolean): StoreSettings {
+    const existing = this.getByStoreId(storeId);
+
+    return this.updateStoreSettings(storeId, {
+      enabled,
+      shipping_option_names: existing.shipping_option_names ?? [],
+    });
   }
 
   deleteByStoreId(storeId: number): void {
