@@ -3,6 +3,22 @@ import axios from "axios";
 import { userRepository } from "@repository";
 import { HttpErrorException } from "@utils";
 
+const formatTiendanubeApiMessage = (value: unknown): string => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item)).join(" ");
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value == null) {
+    return "Error de API";
+  }
+
+  return String(value);
+};
+
 export const getTiendanubeContentApiBaseUrl = (): string => {
   const configured = process.env.TIENDANUBE_API_URL?.replace(/\/$/, "");
 
@@ -55,8 +71,8 @@ tiendanubeContentApiClient.interceptors.response.use(
     if (error.isAxiosError) {
       const { data, status } = error.response ?? {};
       const payload = new HttpErrorException(
-        "TiendanubeContentApiClient - " + (data?.message ?? "Error de API"),
-        data?.description ?? data?.error
+        "TiendanubeContentApiClient - " + formatTiendanubeApiMessage(data),
+        formatTiendanubeApiMessage(data?.description ?? data?.error)
       );
       payload.setStatusCode(data?.code ?? status ?? 500);
       return Promise.reject(payload);

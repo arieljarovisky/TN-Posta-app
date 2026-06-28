@@ -20,8 +20,13 @@ type TiendanubePage = {
 type TiendanubePagesResponse = {
   pages?: {
     results?: TiendanubePage[];
+    page?: number;
+    lastPage?: number;
+    total?: number;
   };
 };
+
+const PAGES_PER_REQUEST = 20;
 
 type TiendanubeStore = {
   url?: string;
@@ -131,11 +136,16 @@ const normalizeStoreBaseUrl = (store: TiendanubeStore): string => {
 
 const extractApiErrorMessage = (error: unknown): string => {
   if (error instanceof HttpErrorException) {
-    return [error.description, error.message].filter(Boolean).join(" - ");
+    const description = formatApiErrorText(error.description);
+    const message = formatApiErrorText(error.message);
+
+    return [description, message].filter(Boolean).join(" - ");
   }
 
   if (error instanceof Error && "description" in error) {
-    const description = String((error as { description?: string }).description ?? "");
+    const description = formatApiErrorText(
+      (error as { description?: unknown }).description
+    );
     if (description) {
       return description;
     }
@@ -148,30 +158,57 @@ const extractApiErrorMessage = (error: unknown): string => {
   return "";
 };
 
+const formatApiErrorText = (value: unknown): string => {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item)).join(" ");
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value == null) {
+    return "";
+  }
+
+  return String(value);
+};
+
 class TrackingPageSyncService {
   private async getStore(storeId: number): Promise<TiendanubeStore> {
     return (await tiendanubeContentApiClient.get(`${storeId}/store`)) as TiendanubeStore;
-  }
-
-  private async listPages(storeId: number): Promise<TiendanubePage[]> {
-    const response = (await tiendanubeContentApiClient.get(
-      `${storeId}/pages?per_page=200`
-    )) as TiendanubePagesResponse | TiendanubePage[];
-
-    if (Array.isArray(response)) {
-      return response;
-    }
-
-    return response.pages?.results ?? [];
   }
 
   private async findPageByHandle(
     storeId: number,
     handle: string
   ): Promise<TiendanubePage | undefined> {
-    const pages = await this.listPages(storeId);
+    let page = 1;
+    let lastPage = 1;
 
-    return pages.find((page) => pageHandlesMatch(page, handle));
+    do {
+      const response = (await tiendanubeContentApiClient.get(
+        `${storeId}/pages?page=${page}&per_page=${PAGES_PER_REQUEST}`
+      )) as TiendanubePagesResponse | TiendanubePage[];
+
+      const batch = Array.isArray(response)
+        ? response
+        : (response.pages?.results ?? []);
+
+      const match = batch.find((item) => pageHandlesMatch(item, handle));
+      if (match) {
+        return match;
+      }
+
+      if (Array.isArray(response)) {
+        break;
+      }
+
+      lastPage = response.pages?.lastPage ?? page;
+      page += 1;
+    } while (page <= lastPage);
+
+    return undefined;
   }
 
   private async ensureStorefrontScript(
