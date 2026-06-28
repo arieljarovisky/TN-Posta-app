@@ -12,13 +12,37 @@ const resources = {
       home: {
         title: "Envios personalizados",
         description:
-          "Crea envios propios para pedidos en Capital Federal y Gran Buenos Aires, y genera etiquetas para imprimir.",
+          "Activa o desactiva envios propios para pedidos en Capital Federal y Gran Buenos Aires.",
+        serviceStatus: "Estado del servicio",
+        toggleLabel: "Envios Posta CABA/GBA",
+        toggleHelp:
+          "Al activar, podes crear envios personalizados y generar etiquetas PDF.",
+        statusLabel: "Estado:",
+        statusActive: "Activo",
+        statusInactive: "Inactivo",
+        activeDescription:
+          "El servicio esta activo. Los pedidos elegibles en CABA y GBA pueden convertirse en envios.",
+        inactiveDescription:
+          "El servicio esta desactivado. No se procesaran envios hasta que lo actives.",
+        inactiveAlertTitle: "Servicio desactivado",
+        inactiveAlertBody:
+          "Activa el interruptor de arriba para empezar a gestionar envios en tu tienda.",
+        activatedToast: "Servicio activado correctamente.",
+        deactivatedToast: "Servicio desactivado.",
+        manageTitle: "Gestionar envios",
         ordersCard: "Ver pedidos elegibles",
+        ordersCardHelp:
+          "Pedidos con direccion en CABA o GBA listos para crear un envio.",
         shipmentsCard: "Ver envios creados",
+        shipmentsCardHelp:
+          "Consulta envios ya creados y descarga las etiquetas en PDF.",
+        coverageTitle: "Cobertura",
+        coverageBody: "Capital Federal y Gran Buenos Aires unicamente.",
       },
       orders: {
         title: "Pedidos",
         empty: "No hay pedidos elegibles en CABA o GBA.",
+        serviceDisabled: "Activa TN Posta desde la pantalla principal para ver pedidos.",
         createShipment: "Crear envio",
         hasShipment: "Envio creado",
         zone: "Zona",
@@ -30,6 +54,7 @@ const resources = {
       shipments: {
         title: "Envios",
         empty: "Todavia no creaste envios.",
+        serviceDisabled: "Activa TN Posta desde la pantalla principal para ver envios.",
         downloadLabel: "Descargar etiqueta",
         order: "Pedido",
         zone: "Zona",

@@ -8,13 +8,17 @@ import {
   Box,
   Button,
   Card,
+  Spinner,
+  Tag,
   Text,
   Title,
+  Toggle,
   useToast,
 } from "@nimbus-ds/components";
 import { LocationIcon, TruckIcon } from "@nimbus-ds/icons";
 
 import { nexo } from "@/app";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
 import {
   clearInstallParamsFromUrl,
   getInstallStatusFromUrl,
@@ -25,6 +29,7 @@ const Home = () => {
   const { t } = useTranslation("translations");
   const { addToast } = useToast();
   const [searchParams] = useSearchParams();
+  const { enabled, loading, saving, toggleEnabled } = useStoreSettings();
 
   useEffect(() => {
     navigateHeaderRemove(nexo);
@@ -64,6 +69,29 @@ const Home = () => {
     }
   }, [addToast, searchParams]);
 
+  const handleToggle = async () => {
+    const success = await toggleEnabled(!enabled);
+
+    if (success) {
+      addToast({
+        id: crypto.randomUUID(),
+        type: "success",
+        text: !enabled
+          ? t("home.activatedToast")
+          : t("home.deactivatedToast"),
+        duration: 4000,
+      });
+      return;
+    }
+
+    addToast({
+      id: crypto.randomUUID(),
+      type: "danger",
+      text: t("errors.generic"),
+      duration: 4000,
+    });
+  };
+
   return (
     <Page>
       <Page.Header title={t("app.title")} />
@@ -73,54 +101,98 @@ const Home = () => {
             <Box display="flex" flexDirection="column" gap="4">
               <Text>{t("home.description")}</Text>
 
-              <Alert appearance="neutral" title="Primera vez?">
-                <Text>
-                  Si la app abre directo sin pedir permisos, desinstalala desde
-                  la tienda Lupo (Apps → Posta → Desinstalar) y volve a
-                  instalar desde el portal de socios.
-                </Text>
-              </Alert>
-
               <Card>
-                <Card.Header title={t("home.ordersCard")} />
+                <Card.Header title={t("home.serviceStatus")} />
                 <Card.Body>
-                  <Text>
-                    Lista pedidos con direccion en CABA o GBA listos para crear
-                    un envio personalizado.
-                  </Text>
+                  <Box display="flex" flexDirection="column" gap="4">
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="space-between"
+                      gap="4"
+                    >
+                      <Box display="flex" flexDirection="column" gap="1">
+                        <Text fontWeight="medium">{t("home.toggleLabel")}</Text>
+                        <Text fontSize="caption" color="neutral-textLow">
+                          {t("home.toggleHelp")}
+                        </Text>
+                      </Box>
+
+                      {loading ? (
+                        <Spinner size="small" />
+                      ) : (
+                        <Toggle
+                          name="service-enabled"
+                          active={enabled}
+                          disabled={saving}
+                          onChange={handleToggle}
+                        />
+                      )}
+                    </Box>
+
+                    <Box display="flex" alignItems="center" gap="2">
+                      <Text fontWeight="medium">{t("home.statusLabel")}</Text>
+                      <Tag appearance={enabled ? "success" : "neutral"}>
+                        {enabled ? t("home.statusActive") : t("home.statusInactive")}
+                      </Tag>
+                    </Box>
+
+                    <Text fontSize="caption" color="neutral-textLow">
+                      {enabled
+                        ? t("home.activeDescription")
+                        : t("home.inactiveDescription")}
+                    </Text>
+                  </Box>
                 </Card.Body>
-                <Card.Footer>
-                  <Button
-                    appearance="primary"
-                    onClick={() => navigate("/orders")}
-                  >
-                    <LocationIcon size="small" />
-                    {t("home.ordersCard")}
-                  </Button>
-                </Card.Footer>
               </Card>
 
-              <Card>
-                <Card.Header title={t("home.shipmentsCard")} />
-                <Card.Body>
-                  <Text>
-                    Consulta envios ya creados y descarga las etiquetas en PDF.
-                  </Text>
-                </Card.Body>
-                <Card.Footer>
-                  <Button
-                    appearance="neutral"
-                    onClick={() => navigate("/shipments")}
-                  >
-                    <TruckIcon size="small" />
-                    {t("home.shipmentsCard")}
-                  </Button>
-                </Card.Footer>
-              </Card>
+              {enabled && (
+                <Box display="flex" flexDirection="column" gap="3">
+                  <Title as="h6">{t("home.manageTitle")}</Title>
+
+                  <Card>
+                    <Card.Header title={t("home.ordersCard")} />
+                    <Card.Body>
+                      <Text>{t("home.ordersCardHelp")}</Text>
+                    </Card.Body>
+                    <Card.Footer>
+                      <Button
+                        appearance="primary"
+                        onClick={() => navigate("/orders")}
+                      >
+                        <LocationIcon size="small" />
+                        {t("home.ordersCard")}
+                      </Button>
+                    </Card.Footer>
+                  </Card>
+
+                  <Card>
+                    <Card.Header title={t("home.shipmentsCard")} />
+                    <Card.Body>
+                      <Text>{t("home.shipmentsCardHelp")}</Text>
+                    </Card.Body>
+                    <Card.Footer>
+                      <Button
+                        appearance="neutral"
+                        onClick={() => navigate("/shipments")}
+                      >
+                        <TruckIcon size="small" />
+                        {t("home.shipmentsCard")}
+                      </Button>
+                    </Card.Footer>
+                  </Card>
+                </Box>
+              )}
+
+              {!loading && !enabled && (
+                <Alert appearance="neutral" title={t("home.inactiveAlertTitle")}>
+                  <Text>{t("home.inactiveAlertBody")}</Text>
+                </Alert>
+              )}
 
               <Box paddingY="2">
-                <Title as="h6">Cobertura</Title>
-                <Text>Capital Federal y Gran Buenos Aires unicamente.</Text>
+                <Title as="h6">{t("home.coverageTitle")}</Title>
+                <Text>{t("home.coverageBody")}</Text>
               </Box>
             </Box>
           </Layout.Section>

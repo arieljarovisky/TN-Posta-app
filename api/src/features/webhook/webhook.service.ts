@@ -1,4 +1,4 @@
-import { shipmentRepository, userRepository } from "@repository";
+import { settingsRepository, shipmentRepository, userRepository } from "@repository";
 import {
   CustomerDataRequestPayload,
   CustomerRedactPayload,
@@ -9,6 +9,7 @@ class WebhookService {
   handleStoreRedact(payload: StoreRedactPayload): void {
     userRepository.deleteByStoreId(payload.store_id);
     shipmentRepository.deleteByStoreId(payload.store_id);
+    settingsRepository.deleteByStoreId(payload.store_id);
   }
 
   handleCustomerRedact(payload: CustomerRedactPayload): void {

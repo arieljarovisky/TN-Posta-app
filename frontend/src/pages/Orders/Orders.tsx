@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { navigateHeader } from "@tiendanube/nexo";
 import { Layout, Page } from "@nimbus-ds/patterns";
 import {
@@ -18,12 +19,15 @@ import {
 
 import { nexo } from "@/app";
 import { Responsive } from "@/components";
+import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { createShipment, fetchEligibleOrders } from "@/services/shipments.api";
 import { OrderSummary } from "@/types/api";
 
 const Orders = () => {
   const { t } = useTranslation("translations");
+  const navigate = useNavigate();
   const { addToast } = useToast();
+  const { enabled: serviceEnabled, loading: settingsLoading } = useStoreSettings();
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -54,8 +58,16 @@ const Orders = () => {
 
   useEffect(() => {
     navigateHeader(nexo, { goTo: "/", text: t("app.backHome") });
-    loadOrders();
-  }, [loadOrders, t]);
+
+    if (!settingsLoading && serviceEnabled) {
+      loadOrders();
+      return;
+    }
+
+    if (!settingsLoading) {
+      setLoading(false);
+    }
+  }, [loadOrders, serviceEnabled, settingsLoading, t]);
 
   const handleCreateShipment = async () => {
     if (!selectedOrder) {
@@ -118,19 +130,30 @@ const Orders = () => {
       <Page.Body px={{ xs: "none", md: "6" }}>
         <Layout columns="1">
           <Layout.Section>
-            {loading && (
+            {(settingsLoading || loading) && (
               <Box display="flex" justifyContent="center" padding="4">
                 <Spinner size="large" />
               </Box>
             )}
 
-            {!loading && orders.length === 0 && (
+            {!settingsLoading && !serviceEnabled && (
+              <Alert appearance="warning" title={t("home.inactiveAlertTitle")}>
+                <Box display="flex" flexDirection="column" gap="3">
+                  <Text>{t("orders.serviceDisabled")}</Text>
+                  <Button appearance="primary" onClick={() => navigate("/")}>
+                    {t("app.backHome")}
+                  </Button>
+                </Box>
+              </Alert>
+            )}
+
+            {!loading && !settingsLoading && serviceEnabled && orders.length === 0 && (
               <Alert appearance="neutral" title={t("orders.empty")}>
                 <Text>{t("orders.empty")}</Text>
               </Alert>
             )}
 
-            {!loading && orders.length > 0 && (
+            {!loading && !settingsLoading && serviceEnabled && orders.length > 0 && (
               <Responsive
                 mobileContent={
                   <Box display="flex" flexDirection="column" gap="3">

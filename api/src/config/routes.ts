@@ -4,8 +4,10 @@ import passport from "passport";
 import { AuthenticationController } from "@features/auth";
 import { OrderController } from "@features/order";
 import { ProductController } from "@features/product";
+import { SettingsController } from "@features/settings";
 import { ShipmentController } from "@features/shipment";
 import { WebhookController } from "@features/webhook";
+import { requireServiceEnabledMiddleware } from "@middlewares";
 
 const routes = Router();
 const apiRoutes = Router();
@@ -22,34 +24,51 @@ routes.post(
 );
 
 apiRoutes.get(
+  "/settings",
+  passport.authenticate("jwt", { session: false }),
+  SettingsController.get
+);
+apiRoutes.patch(
+  "/settings",
+  passport.authenticate("jwt", { session: false }),
+  SettingsController.update
+);
+
+apiRoutes.get(
   "/orders",
   passport.authenticate("jwt", { session: false }),
+  requireServiceEnabledMiddleware,
   OrderController.getAll
 );
 apiRoutes.get(
   "/orders/:orderId",
   passport.authenticate("jwt", { session: false }),
+  requireServiceEnabledMiddleware,
   OrderController.getOne
 );
 
 apiRoutes.get(
   "/shipments",
   passport.authenticate("jwt", { session: false }),
+  requireServiceEnabledMiddleware,
   ShipmentController.getAll
 );
 apiRoutes.get(
   "/shipments/:shipmentId",
   passport.authenticate("jwt", { session: false }),
+  requireServiceEnabledMiddleware,
   ShipmentController.getOne
 );
 apiRoutes.post(
   "/shipments",
   passport.authenticate("jwt", { session: false }),
+  requireServiceEnabledMiddleware,
   ShipmentController.create
 );
 apiRoutes.get(
   "/shipments/:shipmentId/label",
   passport.authenticate("jwt", { session: false }),
+  requireServiceEnabledMiddleware,
   ShipmentController.downloadLabel
 );
 apiRoutes.post(

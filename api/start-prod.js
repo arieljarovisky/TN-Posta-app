@@ -12,8 +12,13 @@ if (!fs.existsSync(dbPath)) {
 
   if (!Array.isArray(db.shipments)) {
     db.shipments = [];
-    fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
   }
+
+  if (!Array.isArray(db.store_settings)) {
+    db.store_settings = [];
+  }
+
+  fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
 }
 
 process.chdir(apiDir);
