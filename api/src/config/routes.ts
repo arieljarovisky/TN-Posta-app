@@ -24,6 +24,8 @@ routes.post("/shipping/rates", ShippingController.calculateRates);
 
 routes.get("/api/public/tracking/:trackingCode", PublicTrackingController.getTracking);
 routes.get("/api/public/tracking", PublicTrackingController.getTracking);
+routes.get("/seguimiento", PublicTrackingController.getTrackingPage);
+routes.get("/seguimiento/:trackingCode", PublicTrackingController.getTrackingPage);
 routes.get("/api/public/entrega/:trackingCode", PublicTrackingController.getDeliveryPage);
 routes.post("/api/public/entrega/:trackingCode", PublicTrackingController.confirmDelivery);
 

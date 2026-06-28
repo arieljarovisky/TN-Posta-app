@@ -4,3 +4,4 @@ export { default as ShippingRatesEditor } from "./ShippingRatesEditor/ShippingRa
 export { default as ZoneCoveragePanel } from "./ZoneCoveragePanel/ZoneCoveragePanel";
 export { ZoneLocalitiesPreview } from "./ZoneCoveragePanel/ZoneCoveragePanel";
 export { default as ShippingPublishAlert } from "./ShippingPublishAlert/ShippingPublishAlert";
+export { default as TrackingPagePanel } from "./TrackingPagePanel/TrackingPagePanel";

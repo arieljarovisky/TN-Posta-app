@@ -6,6 +6,41 @@ import { ShippingRateRule } from "@features/shipping/interfaces/shipping.interfa
 import { userRepository } from "@repository";
 import { BadRequestException, StatusCode } from "@utils";
 import { getAllZoneCoverage } from "@utils/zone/zone-coverage";
+import {
+  getPublicTrackingPageUrl,
+  getStorePublicUrl,
+} from "@config/oauth-urls";
+import { StoreSettings } from "@features/settings/interfaces/store-settings.interface";
+
+const buildSettingsResponse = (
+  data: StoreSettings,
+  req: Request,
+  connected: boolean,
+  shipping_sync_message?: string
+) => ({
+  enabled: data.enabled,
+  connected,
+  shipping_option_names: data.shipping_option_names ?? [],
+  carrier_id: data.carrier_id ?? null,
+  carrier_name: data.carrier_name ?? "TN Posta",
+  shipping_rates: data.shipping_rates ?? [],
+  zone_localities: getAllZoneCoverage(data.zone_localities).reduce(
+    (acc, zone) => {
+      acc[zone.zone] = zone.localities;
+      return acc;
+    },
+    {} as Record<string, string[]>
+  ),
+  sender: data.sender ?? {
+    business_name: data.carrier_name ?? "TN Posta",
+  },
+  tracking_page_enabled: data.tracking_page_enabled ?? false,
+  tracking_page_title: data.tracking_page_title ?? "Seguimiento de envio",
+  tracking_page_url: getPublicTrackingPageUrl(req),
+  store_public_url: getStorePublicUrl() ?? null,
+  shipping_sync_message,
+  updated_at: data.updated_at,
+});
 
 const DEFAULT_RATES: ShippingRateRule[] = [
   {
@@ -51,26 +86,18 @@ class SettingsController {
         userRepository.findOptional(+req.user.user_id)?.access_token
       );
 
-      return res.status(StatusCode.OK).json({
-        enabled: data.enabled,
-        connected,
-        shipping_option_names: data.shipping_option_names ?? [],
-        carrier_id: data.carrier_id ?? null,
-        carrier_name: data.carrier_name ?? "TN Posta",
-        shipping_rates:
-          data.shipping_rates?.length ? data.shipping_rates : DEFAULT_RATES,
-        zone_localities: getAllZoneCoverage(data.zone_localities).reduce(
-          (acc, zone) => {
-            acc[zone.zone] = zone.localities;
-            return acc;
+      return res.status(StatusCode.OK).json(
+        buildSettingsResponse(
+          {
+            ...data,
+            shipping_rates: data.shipping_rates?.length
+              ? data.shipping_rates
+              : DEFAULT_RATES,
           },
-          {} as Record<string, string[]>
-        ),
-        sender: data.sender ?? {
-          business_name: data.carrier_name ?? "TN Posta",
-        },
-        updated_at: data.updated_at,
-      });
+          req,
+          connected
+        )
+      );
     } catch (error) {
       next(error);
     }
@@ -127,6 +154,16 @@ class SettingsController {
         );
       }
 
+      if (
+        payload.tracking_page_enabled !== undefined &&
+        typeof payload.tracking_page_enabled !== "boolean"
+      ) {
+        throw new BadRequestException(
+          "Invalid payload",
+          "tracking_page_enabled debe ser true o false"
+        );
+      }
+
       const { settings, shipping_sync_message } =
         await SettingsService.updateStoreSettings(+req.user.user_id, {
           enabled: payload.enabled,
@@ -137,31 +174,24 @@ class SettingsController {
           shipping_rates: payload.shipping_rates,
           zone_localities: payload.zone_localities,
           sender: payload.sender,
+          tracking_page_enabled: payload.tracking_page_enabled,
+          tracking_page_title: payload.tracking_page_title?.trim(),
         });
       const connected = Boolean(
         userRepository.findOptional(+req.user.user_id)?.access_token
       );
 
-      return res.status(StatusCode.OK).json({
-        enabled: settings.enabled,
-        connected,
-        shipping_option_names: settings.shipping_option_names ?? [],
-        carrier_id: settings.carrier_id ?? null,
-        carrier_name: settings.carrier_name ?? "TN Posta",
-        shipping_rates: settings.shipping_rates ?? [],
-        zone_localities: getAllZoneCoverage(settings.zone_localities).reduce(
-          (acc, zone) => {
-            acc[zone.zone] = zone.localities;
-            return acc;
+      return res.status(StatusCode.OK).json(
+        buildSettingsResponse(
+          {
+            ...settings,
+            shipping_rates: settings.shipping_rates ?? [],
           },
-          {} as Record<string, string[]>
-        ),
-        sender: settings.sender ?? {
-          business_name: settings.carrier_name ?? "TN Posta",
-        },
-        shipping_sync_message,
-        updated_at: settings.updated_at,
-      });
+          req,
+          connected,
+          shipping_sync_message
+        )
+      );
     } catch (error) {
       next(error);
     }

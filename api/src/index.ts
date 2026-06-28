@@ -68,6 +68,10 @@ if (fs.existsSync(frontendDist)) {
       return next();
     }
 
+    if (req.path.startsWith("/seguimiento")) {
+      return next();
+    }
+
     return serveFrontendIndex(req, res, next);
   });
 }

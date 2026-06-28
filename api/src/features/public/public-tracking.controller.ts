@@ -1,59 +1,17 @@
 import { NextFunction, Request, Response } from "express";
 
 import { buildDeliveryPageHtml } from "@features/public/delivery-page";
+import {
+  buildPublicTrackingPayload,
+} from "@features/public/tracking-data";
+import { buildTrackingPageHtml } from "@features/public/tracking-page";
 import TrackingService, {
   isValidTrackingCode,
   normalizeTrackingCode,
 } from "@features/shipment/tracking.service";
 import { isTrackingStatus } from "@features/shipment/interfaces/tracking.interface";
+import { settingsRepository } from "@repository";
 import { StatusCode } from "@utils";
-
-const buildTrackingEvents = (shipment: {
-  created_at: string;
-  label_generated_at?: string;
-  tracking_status?: string;
-  tracking_status_updated_at?: string;
-}) => {
-  const status = isTrackingStatus(shipment.tracking_status)
-    ? shipment.tracking_status
-    : "preparing";
-
-  return [
-    {
-      key: "created",
-      label: "Pedido registrado",
-      at: shipment.created_at,
-      done: true,
-    },
-    {
-      key: "tracking",
-      label: "Codigo de seguimiento generado",
-      at: shipment.label_generated_at ?? null,
-      done: Boolean(shipment.label_generated_at),
-    },
-    {
-      key: "preparing",
-      label: "En preparacion",
-      at:
-        status === "preparing" ? shipment.tracking_status_updated_at ?? null : null,
-      done: ["preparing", "shipped", "delivered"].includes(status),
-    },
-    {
-      key: "shipped",
-      label: "En camino",
-      at: status === "shipped" || status === "delivered"
-        ? shipment.tracking_status_updated_at ?? null
-        : null,
-      done: ["shipped", "delivered"].includes(status),
-    },
-    {
-      key: "delivered",
-      label: "Entregado",
-      at: status === "delivered" ? shipment.tracking_status_updated_at ?? null : null,
-      done: status === "delivered",
-    },
-  ];
-};
 
 class PublicTrackingController {
   getTracking(
@@ -88,19 +46,95 @@ class PublicTrackingController {
           .json({ message: "No encontramos ese codigo de seguimiento" });
       }
 
-      const status = isTrackingStatus(shipment.tracking_status)
-        ? shipment.tracking_status
-        : "preparing";
+      const storeSettings = settingsRepository.getByStoreId(shipment.store_id);
+
+      if (!storeSettings.tracking_page_enabled) {
+        return res.status(StatusCode.FORBIDDEN).json({
+          message: "La pagina de seguimiento no esta activa para esta tienda",
+        });
+      }
 
       return res.status(StatusCode.OK).json({
-        trackingCode: shipment.tracking_code,
-        orderNumber: shipment.order_number,
-        status,
-        statusLabel: TrackingService.getStatusLabel(status),
+        ...buildPublicTrackingPayload(shipment),
         statusSource: "manual",
-        destinationCity: `${shipment.destination.city}, ${shipment.destination.province}`,
-        customerName: shipment.recipient.name,
-        events: buildTrackingEvents(shipment),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  getTrackingPage(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Response | void {
+    try {
+      const trackingCode = normalizeTrackingCode(
+        (req.params.trackingCode as string | undefined) ??
+          (req.query.code as string | undefined) ??
+          ""
+      );
+
+      const renderPage = (options: Parameters<typeof buildTrackingPageHtml>[0]) =>
+        res.send(buildTrackingPageHtml(options));
+
+      if (!trackingCode) {
+        return renderPage({
+          pageTitle: "Seguimiento de envio",
+        });
+      }
+
+      if (!isValidTrackingCode(trackingCode)) {
+        return renderPage({
+          pageTitle: "Seguimiento de envio",
+          codeInput: trackingCode,
+          errorMessage:
+            "El codigo debe tener formato TPA seguido de 8 digitos (ej. TPA00100001).",
+        });
+      }
+
+      const shipment = TrackingService.findByTrackingCode(trackingCode);
+
+      if (!shipment) {
+        return renderPage({
+          pageTitle: "Seguimiento de envio",
+          codeInput: trackingCode,
+          errorMessage: "No encontramos un envio con ese codigo de seguimiento.",
+        });
+      }
+
+      const storeSettings = settingsRepository.getByStoreId(shipment.store_id);
+      const pageTitle =
+        storeSettings.tracking_page_title?.trim() || "Seguimiento de envio";
+      const storeName =
+        storeSettings.sender?.business_name ??
+        storeSettings.carrier_name ??
+        "TN Posta";
+
+      if (!storeSettings.tracking_page_enabled) {
+        return renderPage({
+          pageTitle,
+          storeName,
+          codeInput: trackingCode,
+          disabledMessage:
+            "El comercio aun no activo la consulta de seguimiento online. Contacta a la tienda si necesitas ayuda.",
+        });
+      }
+
+      if (shipment.tracking_status === "cancelled") {
+        return renderPage({
+          pageTitle,
+          storeName,
+          codeInput: trackingCode,
+          errorMessage: "Este envio fue cancelado.",
+        });
+      }
+
+      return renderPage({
+        pageTitle,
+        storeName,
+        codeInput: trackingCode,
+        result: buildPublicTrackingPayload(shipment),
       });
     } catch (error) {
       next(error);

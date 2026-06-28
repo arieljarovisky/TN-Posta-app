@@ -46,3 +46,39 @@ export const getStoreAppsUrl = (): string | undefined => {
 
   return `https://${slug}.mitiendanube.com/admin/v2/apps/`;
 };
+
+export const getAppPublicBaseUrl = (req?: {
+  protocol?: string;
+  get?: (name: string) => string | undefined;
+}): string => {
+  const configured = process.env.APP_PUBLIC_URL?.replace(/\/$/, "");
+
+  if (configured) {
+    return configured;
+  }
+
+  if (req?.protocol && req.get?.("host")) {
+    return `${req.protocol}://${req.get("host")}`;
+  }
+
+  return "";
+};
+
+export const getPublicTrackingPageUrl = (req?: {
+  protocol?: string;
+  get?: (name: string) => string | undefined;
+}): string => {
+  const base = getAppPublicBaseUrl(req);
+
+  return base ? `${base}/seguimiento` : "/seguimiento";
+};
+
+export const getStorePublicUrl = (): string | undefined => {
+  const slug = getStoreSlug();
+
+  if (!slug) {
+    return undefined;
+  }
+
+  return `https://${slug}.mitiendanube.com`;
+};

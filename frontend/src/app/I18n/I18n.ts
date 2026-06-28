@@ -47,6 +47,8 @@ const resources = {
         senderCity: "Ciudad",
         senderPhone: "Telefono",
         senderSaved: "Datos del remitente guardados.",
+        trackingPageTitle: "Pagina de seguimiento para clientes",
+        trackingPageSaved: "Pagina de seguimiento guardada.",
         coverageTitle: "Cobertura por barrio",
         coverageBody:
           "Agrega o quita barrios y partidos incluidos en cada zona de envio.",

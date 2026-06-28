@@ -20,7 +20,7 @@ import {
 import { LocationIcon, TruckIcon } from "@nimbus-ds/icons";
 
 import { nexo } from "@/app";
-import { ReinstallStoreAlert, ShippingPublishAlert, ShippingRatesEditor, ZoneCoveragePanel } from "@/components";
+import { ReinstallStoreAlert, ShippingPublishAlert, ShippingRatesEditor, TrackingPagePanel, ZoneCoveragePanel } from "@/components";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useZoneCoverage } from "@/hooks/useZoneCoverage";
 import { ShippingRateRule, ZoneLocalitiesMap } from "@/types/shipping";
@@ -47,10 +47,15 @@ const Home = () => {
     shippingSyncMessage,
     zoneLocalities,
     sender,
+    trackingPageEnabled,
+    trackingPageTitle,
+    trackingPageUrl,
+    storePublicUrl,
     toggleEnabled,
     saveShippingConfig,
     saveZoneLocalities,
     saveSenderConfig,
+    saveTrackingPageConfig,
     reloadSettings,
   } = useStoreSettings();
   const {
@@ -66,6 +71,9 @@ const Home = () => {
   const [senderInput, setSenderInput] = useState<SenderConfig>({
     business_name: "TN Posta",
   });
+  const [trackingPageEnabledInput, setTrackingPageEnabledInput] = useState(false);
+  const [trackingPageTitleInput, setTrackingPageTitleInput] =
+    useState("Seguimiento de envio");
 
   useEffect(() => {
     setCarrierNameInput(carrierName);
@@ -79,6 +87,11 @@ const Home = () => {
   useEffect(() => {
     setSenderInput(sender);
   }, [sender]);
+
+  useEffect(() => {
+    setTrackingPageEnabledInput(trackingPageEnabled);
+    setTrackingPageTitleInput(trackingPageTitle);
+  }, [trackingPageEnabled, trackingPageTitle]);
 
   useEffect(() => {
     if (connected) {
@@ -197,6 +210,31 @@ const Home = () => {
         id: crypto.randomUUID(),
         type: "success",
         text: t("home.senderSaved"),
+        duration: 4000,
+      });
+      return;
+    }
+
+    addToast({
+      id: crypto.randomUUID(),
+      type: "danger",
+      text: t("errors.generic"),
+      duration: 4000,
+    });
+  };
+
+  const handleSaveTrackingPage = async () => {
+    const result = await saveTrackingPageConfig({
+      tracking_page_enabled: trackingPageEnabledInput,
+      tracking_page_title:
+        trackingPageTitleInput.trim() || "Seguimiento de envio",
+    });
+
+    if (result.success) {
+      addToast({
+        id: crypto.randomUUID(),
+        type: "success",
+        text: t("home.trackingPageSaved"),
         duration: 4000,
       });
       return;
@@ -451,6 +489,23 @@ const Home = () => {
                       {saving ? "Guardando..." : "Guardar remitente"}
                     </Button>
                   </Box>
+                </Card.Body>
+              </Card>
+
+              <Card>
+                <Card.Header title={t("home.trackingPageTitle")} />
+                <Card.Body>
+                  <TrackingPagePanel
+                    enabled={trackingPageEnabledInput}
+                    title={trackingPageTitleInput}
+                    pageUrl={trackingPageUrl}
+                    storePublicUrl={storePublicUrl}
+                    disabled={loading}
+                    saving={saving}
+                    onEnabledChange={setTrackingPageEnabledInput}
+                    onTitleChange={setTrackingPageTitleInput}
+                    onSave={handleSaveTrackingPage}
+                  />
                 </Card.Body>
               </Card>
 

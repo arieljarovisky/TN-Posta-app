@@ -53,6 +53,8 @@ class SettingsService {
       shipping_rates?: ShippingRateRule[];
       zone_localities?: ZoneLocalitiesMap;
       sender?: SenderConfig;
+      tracking_page_enabled?: boolean;
+      tracking_page_title?: string;
     }
   ): Promise<{ settings: StoreSettings; shipping_sync_message?: string }> {
     const current = settingsRepository.getByStoreId(storeId);
@@ -122,6 +124,12 @@ class SettingsService {
       shipping_rates: normalizedRates,
       zone_localities: normalizedZoneLocalities,
       sender: normalizedSender,
+      tracking_page_enabled:
+        data.tracking_page_enabled ?? current.tracking_page_enabled ?? false,
+      tracking_page_title:
+        data.tracking_page_title?.trim() ||
+        current.tracking_page_title ||
+        "Seguimiento de envio",
     });
 
     let shipping_sync_message: string | undefined;

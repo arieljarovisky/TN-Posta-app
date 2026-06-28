@@ -15,6 +15,10 @@ export const useStoreSettings = () => {
   const [shippingRates, setShippingRates] = useState<ShippingRateRule[]>([]);
   const [zoneLocalities, setZoneLocalities] = useState<ZoneLocalitiesMap>({});
   const [sender, setSender] = useState<SenderConfig>({ business_name: "TN Posta" });
+  const [trackingPageEnabled, setTrackingPageEnabled] = useState(false);
+  const [trackingPageTitle, setTrackingPageTitle] = useState("Seguimiento de envio");
+  const [trackingPageUrl, setTrackingPageUrl] = useState("");
+  const [storePublicUrl, setStorePublicUrl] = useState<string | null>(null);
   const [shippingOptionNames, setShippingOptionNames] = useState<string[]>([]);
   const [shippingSyncMessage, setShippingSyncMessage] = useState<string | null>(
     null
@@ -36,6 +40,10 @@ export const useStoreSettings = () => {
       setShippingRates(data.shipping_rates ?? []);
       setZoneLocalities(data.zone_localities ?? {});
       setSender(data.sender ?? { business_name: data.carrier_name ?? "TN Posta" });
+      setTrackingPageEnabled(data.tracking_page_enabled ?? false);
+      setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
+      setTrackingPageUrl(data.tracking_page_url ?? "");
+      setStorePublicUrl(data.store_public_url ?? null);
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
     } catch {
@@ -65,6 +73,10 @@ export const useStoreSettings = () => {
       setShippingRates(data.shipping_rates ?? []);
       setZoneLocalities(data.zone_localities ?? {});
       setSender(data.sender ?? { business_name: data.carrier_name ?? "TN Posta" });
+      setTrackingPageEnabled(data.tracking_page_enabled ?? false);
+      setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
+      setTrackingPageUrl(data.tracking_page_url ?? "");
+      setStorePublicUrl(data.store_public_url ?? null);
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
       setLoadError(null);
@@ -89,6 +101,10 @@ export const useStoreSettings = () => {
       setShippingRates(data.shipping_rates ?? []);
       setZoneLocalities(data.zone_localities ?? {});
       setSender(data.sender ?? { business_name: data.carrier_name ?? "TN Posta" });
+      setTrackingPageEnabled(data.tracking_page_enabled ?? false);
+      setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
+      setTrackingPageUrl(data.tracking_page_url ?? "");
+      setStorePublicUrl(data.store_public_url ?? null);
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
       setLoadError(null);
@@ -107,6 +123,10 @@ export const useStoreSettings = () => {
       const data = await updateStoreSettings({ zone_localities: localities });
       setZoneLocalities(data.zone_localities ?? {});
       setSender(data.sender ?? { business_name: data.carrier_name ?? "TN Posta" });
+      setTrackingPageEnabled(data.tracking_page_enabled ?? false);
+      setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
+      setTrackingPageUrl(data.tracking_page_url ?? "");
+      setStorePublicUrl(data.store_public_url ?? null);
       setLoadError(null);
       return { success: true };
     } catch {
@@ -131,6 +151,27 @@ export const useStoreSettings = () => {
     }
   };
 
+  const saveTrackingPageConfig = async (payload: {
+    tracking_page_enabled: boolean;
+    tracking_page_title: string;
+  }) => {
+    setSaving(true);
+
+    try {
+      const data = await updateStoreSettings(payload);
+      setTrackingPageEnabled(data.tracking_page_enabled ?? false);
+      setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
+      setTrackingPageUrl(data.tracking_page_url ?? "");
+      setStorePublicUrl(data.store_public_url ?? null);
+      setLoadError(null);
+      return { success: true };
+    } catch {
+      return { success: false };
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return {
     enabled,
     connected,
@@ -139,6 +180,10 @@ export const useStoreSettings = () => {
     shippingRates,
     zoneLocalities,
     sender,
+    trackingPageEnabled,
+    trackingPageTitle,
+    trackingPageUrl,
+    storePublicUrl,
     shippingOptionNames,
     shippingSyncMessage,
     loading,
@@ -148,6 +193,7 @@ export const useStoreSettings = () => {
     saveShippingConfig,
     saveZoneLocalities,
     saveSenderConfig,
+    saveTrackingPageConfig,
     reloadSettings: loadSettings,
   };
 };

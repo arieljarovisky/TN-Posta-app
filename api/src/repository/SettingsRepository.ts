@@ -51,6 +51,8 @@ class SettingsRepository {
       | "shipping_rates"
       | "zone_localities"
       | "sender"
+      | "tracking_page_enabled"
+      | "tracking_page_title"
     >
   ): StoreSettings {
     const existing = this.getByStoreId(storeId);
@@ -63,6 +65,10 @@ class SettingsRepository {
       shipping_rates: data.shipping_rates ?? existing.shipping_rates ?? [],
       zone_localities: data.zone_localities ?? existing.zone_localities,
       sender: data.sender ?? existing.sender,
+      tracking_page_enabled:
+        data.tracking_page_enabled ?? existing.tracking_page_enabled ?? false,
+      tracking_page_title:
+        data.tracking_page_title ?? existing.tracking_page_title ?? "Seguimiento de envio",
       updated_at: new Date().toISOString(),
     };
 

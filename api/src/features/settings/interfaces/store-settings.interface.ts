@@ -21,6 +21,8 @@ export interface StoreSettings {
   shipping_rates?: ShippingRateRule[];
   zone_localities?: ZoneLocalitiesMap;
   sender?: SenderConfig;
+  tracking_page_enabled?: boolean;
+  tracking_page_title?: string;
   updated_at: string;
 }
 
@@ -31,6 +33,8 @@ export interface UpdateStoreSettingsRequest {
   shipping_rates?: ShippingRateRule[];
   zone_localities?: ZoneLocalitiesMap;
   sender?: SenderConfig;
+  tracking_page_enabled?: boolean;
+  tracking_page_title?: string;
 }
 
 export interface StoreSettingsResponse {
@@ -42,6 +46,10 @@ export interface StoreSettingsResponse {
   shipping_rates: ShippingRateRule[];
   zone_localities?: ZoneLocalitiesMap;
   sender?: SenderConfig;
+  tracking_page_enabled?: boolean;
+  tracking_page_title?: string;
+  tracking_page_url?: string;
+  store_public_url?: string | null;
   shipping_sync_message?: string;
   updated_at: string;
 }
