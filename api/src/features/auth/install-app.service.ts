@@ -1,7 +1,8 @@
 import { tiendanubeAuthClient } from "@config";
 import { BadRequestException } from "@utils";
-import { userRepository } from "@repository";
+import { userRepository, settingsRepository } from "@repository";
 import { TiendanubeAuthRequest, TiendanubeAuthInterface } from "@features/auth";
+import { ShippingCarrierService } from "@features/shipping";
 import { logError, logInfo, maskCode } from "@utils/logger";
 
 class InstallAppService {
@@ -67,6 +68,23 @@ class InstallAppService {
       scope: authenticateResponse.scope,
       tokenType: authenticateResponse.token_type,
     });
+
+    try {
+      const settings = settingsRepository.getByStoreId(+authenticateResponse.user_id);
+
+      await ShippingCarrierService.syncCarrierOptions(
+        +authenticateResponse.user_id,
+        settings.shipping_rates ?? [],
+        settings.carrier_name
+      );
+    } catch (syncError) {
+      logError(
+        "auth/install-service",
+        "No se pudo sincronizar carrier al instalar",
+        syncError,
+        { storeId: authenticateResponse.user_id }
+      );
+    }
 
     return authenticateResponse;
   }

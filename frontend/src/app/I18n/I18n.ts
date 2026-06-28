@@ -32,13 +32,10 @@ const resources = {
         manageTitle: "Gestionar envios",
         ordersCard: "Ver pedidos elegibles",
         ordersCardHelp:
-          "Solo pedidos donde el cliente eligio tu metodo de envio en CABA o GBA.",
-        shippingNamesLabel: "Nombre del envio en tu tienda",
-        shippingNamesPlaceholder: "ENVIO EXPRESS",
-        shippingNamesHelp:
-          "Usa el nombre de tu Envio personalizado en Tiendanube (Configuracion > Envios). Si tenes varias tarifas con el mismo nombre (ej. CABA $4500, GBA $6500), alcanza con poner ENVIO EXPRESS una sola vez.",
-        shippingNamesSave: "Guardar nombre de envio",
-        shippingNamesSaved: "Nombre de envio guardado.",
+          "Solo pedidos donde el cliente eligio una tarifa de TN Posta en CABA o GBA.",
+        shippingRatesTitle: "Tarifas de envio",
+        shippingRatesSaved: "Tarifas guardadas correctamente.",
+        shippingRatesRequired: "Agrega al menos una tarifa con nombre y precio.",
         shipmentsCard: "Ver envios creados",
         shipmentsCardHelp:
           "Consulta envios ya creados y descarga las etiquetas en PDF.",

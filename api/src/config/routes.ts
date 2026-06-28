@@ -6,6 +6,7 @@ import { OrderController } from "@features/order";
 import { ProductController } from "@features/product";
 import { SettingsController } from "@features/settings";
 import { ShipmentController } from "@features/shipment";
+import { ShippingController } from "@features/shipping";
 import { WebhookController } from "@features/webhook";
 import { requireServiceEnabledMiddleware, requireStoreCredentialsMiddleware } from "@middlewares";
 
@@ -15,6 +16,8 @@ const apiRoutes = Router();
 routes.get("/auth/install", AuthenticationController.install);
 routes.get("/auth/status", AuthenticationController.status);
 routes.get("/auth/debug", AuthenticationController.debug);
+
+routes.post("/shipping/rates", ShippingController.calculateRates);
 
 routes.post("/webhooks/store/redact", WebhookController.storeRedact);
 routes.post("/webhooks/customers/redact", WebhookController.customersRedact);

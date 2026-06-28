@@ -8,8 +8,6 @@ import {
   Box,
   Button,
   Card,
-  Input,
-  Label,
   Spinner,
   Tag,
   Text,
@@ -20,8 +18,9 @@ import {
 import { LocationIcon, TruckIcon } from "@nimbus-ds/icons";
 
 import { nexo } from "@/app";
-import { ReinstallStoreAlert } from "@/components";
+import { ReinstallStoreAlert, ShippingRatesEditor } from "@/components";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
+import { ShippingRateRule } from "@/types/shipping";
 import {
   clearInstallParamsFromUrl,
   getInstallStatusFromUrl,
@@ -38,16 +37,20 @@ const Home = () => {
     saving,
     loadError,
     connected,
-    shippingOptionNames,
+    carrierName,
+    shippingRates,
+    shippingSyncMessage,
     toggleEnabled,
-    saveShippingOptionNames,
+    saveShippingConfig,
     reloadSettings,
   } = useStoreSettings();
-  const [shippingNamesInput, setShippingNamesInput] = useState("");
+  const [carrierNameInput, setCarrierNameInput] = useState("TN Posta");
+  const [ratesInput, setRatesInput] = useState<ShippingRateRule[]>([]);
 
   useEffect(() => {
-    setShippingNamesInput(shippingOptionNames.join(", "));
-  }, [shippingOptionNames]);
+    setCarrierNameInput(carrierName);
+    setRatesInput(shippingRates);
+  }, [carrierName, shippingRates]);
 
   useEffect(() => {
     if (connected) {
@@ -107,21 +110,41 @@ const Home = () => {
     navigateHeaderRemove(nexo);
   }, []);
 
-  const handleSaveShippingNames = async () => {
-    const names = shippingNamesInput
-      .split(",")
-      .map((name) => name.trim())
-      .filter(Boolean);
+  const handleSaveShippingConfig = async () => {
+    const validRates = ratesInput.filter((rate) => rate.name.trim());
 
-    const success = await saveShippingOptionNames(names);
+    if (validRates.length === 0) {
+      addToast({
+        id: crypto.randomUUID(),
+        type: "danger",
+        text: t("home.shippingRatesRequired"),
+        duration: 4000,
+      });
+      return;
+    }
 
-    if (success) {
+    const result = await saveShippingConfig({
+      carrier_name: carrierNameInput.trim() || "TN Posta",
+      shipping_rates: validRates,
+    });
+
+    if (result.success) {
       addToast({
         id: crypto.randomUUID(),
         type: "success",
-        text: t("home.shippingNamesSaved"),
+        text: t("home.shippingRatesSaved"),
         duration: 4000,
       });
+
+      if (result.syncMessage) {
+        addToast({
+          id: crypto.randomUUID(),
+          type: "primary",
+          text: result.syncMessage,
+          duration: 8000,
+        });
+      }
+
       return;
     }
 
@@ -219,35 +242,28 @@ const Home = () => {
                         ? t("home.activeDescription")
                         : t("home.inactiveDescription")}
                     </Text>
-
-                    <Box display="flex" flexDirection="column" gap="2">
-                      <Label htmlFor="shipping-names">
-                        {t("home.shippingNamesLabel")}
-                      </Label>
-                      <Input
-                        id="shipping-names"
-                        name="shipping-names"
-                        value={shippingNamesInput}
-                        disabled={saving || loading}
-                        placeholder={t("home.shippingNamesPlaceholder")}
-                        onChange={(event) =>
-                          setShippingNamesInput(event.target.value)
-                        }
-                      />
-                      <Text fontSize="caption" color="neutral-textLow">
-                        {t("home.shippingNamesHelp")}
-                      </Text>
-                      <Box>
-                        <Button
-                          appearance="neutral"
-                          disabled={saving || loading}
-                          onClick={handleSaveShippingNames}
-                        >
-                          {t("home.shippingNamesSave")}
-                        </Button>
-                      </Box>
-                    </Box>
                   </Box>
+                </Card.Body>
+              </Card>
+
+              <Card>
+                <Card.Header title={t("home.shippingRatesTitle")} />
+                <Card.Body>
+                  <ShippingRatesEditor
+                    carrierName={carrierNameInput}
+                    rates={ratesInput}
+                    disabled={saving || loading}
+                    onCarrierNameChange={setCarrierNameInput}
+                    onRatesChange={setRatesInput}
+                    onSave={handleSaveShippingConfig}
+                  />
+                  {shippingSyncMessage && (
+                    <Box paddingTop="3">
+                      <Text fontSize="caption" color="neutral-textLow">
+                        {shippingSyncMessage}
+                      </Text>
+                    </Box>
+                  )}
                 </Card.Body>
               </Card>
 

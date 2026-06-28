@@ -13,6 +13,38 @@ export const GBA_PROVINCE_ALIASES = [
   "gba",
 ];
 
+export const GBA_NEAR_LOCALITIES = [
+  "avellaneda",
+  "lanus",
+  "lanús",
+  "lomas de zamora",
+  "quilmes",
+  "berazategui",
+  "florencio varela",
+  "almirante brown",
+  "moron",
+  "morón",
+];
+
+export const GBA_EXTENDED_LOCALITIES = [
+  "san isidro",
+  "vicente lopez",
+  "vicente lópez",
+  "tigre",
+  "san fernando",
+  "san miguel",
+  "malvinas argentinas",
+  "jose c. paz",
+  "josé c. paz",
+  "tres de febrero",
+  "hurlingham",
+  "ituzaingo",
+  "ituzaingó",
+  "la matanza",
+  "esteban echeverria",
+  "esteban echeverría",
+];
+
 export const GBA_LOCALITIES = [
   "avellaneda",
   "san isidro",

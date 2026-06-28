@@ -12,6 +12,7 @@ import {
   extractShippingSelection,
   matchesAppShippingMethod,
 } from "@features/order/order-shipping";
+import { StoreSettings } from "@features/settings/interfaces/store-settings.interface";
 import { HttpErrorException } from "@utils";
 import { validateDeliveryZone } from "@utils/zone";
 
@@ -23,7 +24,7 @@ class OrderService {
     const orders = await this.fetchOrders(storeId);
     const storeSettings = settingsRepository.getByStoreId(storeId);
     const summaries = orders.map((order) =>
-      this.toOrderSummary(storeId, order, storeSettings.shipping_option_names)
+      this.toOrderSummary(storeId, order, storeSettings)
     );
 
     if (!eligibleOnly) {
@@ -42,11 +43,7 @@ class OrderService {
 
     const storeSettings = settingsRepository.getByStoreId(storeId);
 
-    return this.toOrderSummary(
-      storeId,
-      order,
-      storeSettings.shipping_option_names
-    );
+    return this.toOrderSummary(storeId, order, storeSettings);
   }
 
   async getOrderForShipment(
@@ -93,7 +90,7 @@ class OrderService {
   private toOrderSummary(
     storeId: number,
     order: TiendanubeOrder,
-    shippingOptionNames?: string[]
+    storeSettings: StoreSettings
   ): OrderSummary {
     const shippingAddress = extractShippingAddress(order);
     const shippingSelection = extractShippingSelection(order);
@@ -131,7 +128,10 @@ class OrderService {
     );
     const shippingValidation = matchesAppShippingMethod(
       shippingSelection,
-      shippingOptionNames
+      storeSettings.shipping_option_names,
+      (storeSettings.shipping_rates ?? [])
+        .filter((rate) => rate.active)
+        .map((rate) => rate.code)
     );
 
     const eligible = zoneValidation.eligible && shippingValidation.matches;

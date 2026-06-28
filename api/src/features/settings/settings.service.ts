@@ -1,22 +1,121 @@
-import { settingsRepository } from "@repository";
+import { settingsRepository, userRepository } from "@repository";
+import {
+  normalizeShippingRates,
+  ShippingCarrierService,
+} from "@features/shipping";
 import { StoreSettings } from "@features/settings/interfaces/store-settings.interface";
+import { ShippingRateRule } from "@features/shipping/interfaces/shipping.interfaces";
+import { BadRequestException } from "@utils";
+
+const DEFAULT_RATES: ShippingRateRule[] = [
+  {
+    id: "default-caba",
+    code: "envio_caba",
+    name: "ENVIO EXPRESS - CABA",
+    zone: "caba",
+    price: 4500,
+    active: true,
+  },
+  {
+    id: "default-gba-near",
+    code: "envio_gba_cercano",
+    name: "ENVIO EXPRESS - GBA cercano",
+    zone: "gba_near",
+    price: 6500,
+    active: true,
+  },
+  {
+    id: "default-gba-extended",
+    code: "envio_gba_extendido",
+    name: "ENVIO EXPRESS - GBA extendido",
+    zone: "gba_extended",
+    price: 8500,
+    active: true,
+  },
+];
 
 class SettingsService {
   getStoreSettings(storeId: number): StoreSettings {
     return settingsRepository.getByStoreId(storeId);
   }
 
-  updateStoreSettings(
+  async updateStoreSettings(
     storeId: number,
-    data: { enabled?: boolean; shipping_option_names?: string[] }
-  ): StoreSettings {
+    data: {
+      enabled?: boolean;
+      shipping_option_names?: string[];
+      carrier_name?: string;
+      shipping_rates?: ShippingRateRule[];
+    }
+  ): Promise<{ settings: StoreSettings; shipping_sync_message?: string }> {
     const current = settingsRepository.getByStoreId(storeId);
+    const normalizedRates = data.shipping_rates
+      ? normalizeShippingRates(data.shipping_rates)
+      : current.shipping_rates?.length
+        ? current.shipping_rates
+        : DEFAULT_RATES;
 
-    return settingsRepository.updateStoreSettings(storeId, {
+    if (data.shipping_rates) {
+      for (const rate of normalizedRates) {
+        if (!rate.name.trim()) {
+          throw new BadRequestException(
+            "Tarifa invalida",
+            "Cada tarifa debe tener un nombre."
+          );
+        }
+
+        if (Number.isNaN(rate.price) || rate.price < 0) {
+          throw new BadRequestException(
+            "Tarifa invalida",
+            "El precio debe ser un numero mayor o igual a 0."
+          );
+        }
+      }
+    }
+
+    const shippingOptionNames = [
+      ...new Set(
+        [
+          ...(data.shipping_option_names ?? current.shipping_option_names ?? []),
+          ...normalizedRates.filter((rate) => rate.active).map((rate) => rate.name),
+        ]
+          .map((name) => name.trim())
+          .filter(Boolean)
+      ),
+    ];
+
+    const settings = settingsRepository.updateStoreSettings(storeId, {
       enabled: data.enabled ?? current.enabled,
-      shipping_option_names:
-        data.shipping_option_names ?? current.shipping_option_names ?? [],
+      shipping_option_names: shippingOptionNames,
+      carrier_name: data.carrier_name ?? current.carrier_name,
+      shipping_rates: normalizedRates,
     });
+
+    let shipping_sync_message: string | undefined;
+
+    const hasCredentials = Boolean(userRepository.findOptional(storeId)?.access_token);
+
+    if (hasCredentials && (data.shipping_rates || data.carrier_name || data.enabled)) {
+      const syncResult = await ShippingCarrierService.syncCarrierOptions(
+        storeId,
+        settings.shipping_rates ?? [],
+        settings.carrier_name
+      );
+
+      shipping_sync_message = syncResult.message;
+
+      if (syncResult.carrierId && !settings.carrier_id) {
+        settingsRepository.updateCarrier(storeId, {
+          carrier_id: syncResult.carrierId,
+          carrier_name: settings.carrier_name,
+        });
+      }
+    }
+
+    return {
+      settings: settingsRepository.getByStoreId(storeId),
+      shipping_sync_message,
+    };
   }
 
   isServiceEnabled(storeId: number): boolean {

@@ -77,7 +77,8 @@ export const extractShippingSelection = (
 
 export const matchesAppShippingMethod = (
   selection: OrderShippingSelection | null,
-  storeShippingNames?: string[]
+  storeShippingNames?: string[],
+  configuredRateCodes?: string[]
 ): { matches: boolean; reason?: string } => {
   if (!selection) {
     return {
@@ -94,6 +95,17 @@ export const matchesAppShippingMethod = (
   }
 
   if (selection.carrier_id && appId && selection.carrier_id === appId) {
+    return { matches: true };
+  }
+
+  const normalizedCodes = (configuredRateCodes ?? [])
+    .map((code) => normalize(code))
+    .filter(Boolean);
+
+  if (
+    selection.option_code &&
+    normalizedCodes.includes(normalize(selection.option_code))
+  ) {
     return { matches: true };
   }
 

@@ -4,11 +4,17 @@ import {
   fetchStoreSettings,
   updateStoreSettings,
 } from "@/services/settings.api";
+import { ShippingRateRule } from "@/types/shipping";
 
 export const useStoreSettings = () => {
   const [enabled, setEnabled] = useState(false);
   const [connected, setConnected] = useState(true);
+  const [carrierName, setCarrierName] = useState("TN Posta");
+  const [shippingRates, setShippingRates] = useState<ShippingRateRule[]>([]);
   const [shippingOptionNames, setShippingOptionNames] = useState<string[]>([]);
+  const [shippingSyncMessage, setShippingSyncMessage] = useState<string | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -21,7 +27,10 @@ export const useStoreSettings = () => {
       const data = await fetchStoreSettings();
       setEnabled(data.enabled);
       setConnected(data.connected);
+      setCarrierName(data.carrier_name ?? "TN Posta");
+      setShippingRates(data.shipping_rates ?? []);
       setShippingOptionNames(data.shipping_option_names ?? []);
+      setShippingSyncMessage(data.shipping_sync_message ?? null);
     } catch {
       setLoadError("No se pudo cargar la configuracion del servicio.");
     } finally {
@@ -39,32 +48,40 @@ export const useStoreSettings = () => {
     try {
       const data = await updateStoreSettings({
         enabled: nextEnabled,
-        shipping_option_names: shippingOptionNames,
+        carrier_name: carrierName,
+        shipping_rates: shippingRates,
       });
       setEnabled(data.enabled);
       setConnected(data.connected);
+      setCarrierName(data.carrier_name ?? carrierName);
+      setShippingRates(data.shipping_rates ?? []);
       setShippingOptionNames(data.shipping_option_names ?? []);
+      setShippingSyncMessage(data.shipping_sync_message ?? null);
       setLoadError(null);
-      return true;
+      return { success: true, syncMessage: data.shipping_sync_message };
     } catch {
-      return false;
+      return { success: false };
     } finally {
       setSaving(false);
     }
   };
 
-  const saveShippingOptionNames = async (names: string[]) => {
+  const saveShippingConfig = async (payload: {
+    carrier_name: string;
+    shipping_rates: ShippingRateRule[];
+  }) => {
     setSaving(true);
 
     try {
-      const data = await updateStoreSettings({
-        shipping_option_names: names,
-      });
+      const data = await updateStoreSettings(payload);
+      setCarrierName(data.carrier_name ?? payload.carrier_name);
+      setShippingRates(data.shipping_rates ?? []);
       setShippingOptionNames(data.shipping_option_names ?? []);
+      setShippingSyncMessage(data.shipping_sync_message ?? null);
       setLoadError(null);
-      return true;
+      return { success: true, syncMessage: data.shipping_sync_message };
     } catch {
-      return false;
+      return { success: false };
     } finally {
       setSaving(false);
     }
@@ -73,12 +90,15 @@ export const useStoreSettings = () => {
   return {
     enabled,
     connected,
+    carrierName,
+    shippingRates,
     shippingOptionNames,
+    shippingSyncMessage,
     loading,
     saving,
     loadError,
     toggleEnabled,
-    saveShippingOptionNames,
+    saveShippingConfig,
     reloadSettings: loadSettings,
   };
 };
