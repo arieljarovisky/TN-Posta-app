@@ -44,11 +44,20 @@ if (fs.existsSync(frontendDist)) {
       return next();
     }
 
-    return res.sendFile(path.join(frontendDist, "index.html"), (error) => {
-      if (error) {
-        return next(error);
-      }
-    });
+    const indexPath = path.join(frontendDist, "index.html");
+
+    try {
+      const configScript = `<script>window.__TN_POSTA_CONFIG__=${JSON.stringify({
+        clientId: process.env.CLIENT_ID ?? "",
+      })};</script>`;
+      const html = fs
+        .readFileSync(indexPath, "utf8")
+        .replace("</head>", `${configScript}</head>`);
+
+      res.type("html").send(html);
+    } catch (error) {
+      return next(error);
+    }
   });
 }
 

@@ -1,9 +1,15 @@
 export const isTiendanubeEmbedded = (): boolean => {
-  try {
-    return window.self !== window.top;
-  } catch {
-    return false;
+  if (window.self !== window.top) {
+    return true;
   }
+
+  const referrer = document.referrer;
+
+  return (
+    referrer.includes("tiendanube.com") ||
+    referrer.includes("mitiendanube.com") ||
+    referrer.includes("nuvemshop.com.br")
+  );
 };
 
 export const TIENDANUBE_ADMIN_URL =

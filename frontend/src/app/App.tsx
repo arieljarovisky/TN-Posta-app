@@ -16,53 +16,33 @@ import InstallSuccessScreen from "./oauth/InstallSuccessScreen";
 import StandaloneNoticeScreen from "./oauth/StandaloneNoticeScreen";
 import "./I18n";
 
-const NEXO_CONNECT_TIMEOUT_MS = 8000;
-
 const App = () => {
   const [isConnect, setIsConnect] = useState(false);
   const [nexoFailed, setNexoFailed] = useState(false);
-  const [showInstallSuccess, setShowInstallSuccess] = useState(
-    () => getInstallStatusFromUrl().installed
-  );
   const [isInstalling] = useState(() => completeOAuthInstallIfNeeded());
-  const isEmbedded = isTiendanubeEmbedded();
+  const [showInstallSuccess] = useState(
+    () =>
+      !isTiendanubeEmbedded() && getInstallStatusFromUrl().installed
+  );
 
   useEffect(() => {
     if (isInstalling || showInstallSuccess) {
       return;
     }
 
-    if (!isEmbedded) {
-      console.info(
-        "[auth/frontend] App abierta fuera del admin de Tiendanube"
-      );
-      return;
-    }
-
-    if (isConnect || nexoFailed) {
-      return;
-    }
-
-    console.info("[auth/frontend] Conectando Nexo...");
-
     let cancelled = false;
 
-    const timeoutId = window.setTimeout(() => {
-      if (!cancelled) {
-        console.warn("[auth/frontend] Timeout conectando Nexo");
-        setNexoFailed(true);
-      }
-    }, NEXO_CONNECT_TIMEOUT_MS);
+    console.info("[auth/frontend] Iniciando connect Nexo...");
 
     connect(nexo)
-      .then(async () => {
+      .then(() => {
         if (cancelled) {
           return;
         }
 
-        console.info("[auth/frontend] Nexo conectado correctamente");
-        setIsConnect(true);
+        console.info("[auth/frontend] Nexo conectado, enviando iAmReady");
         iAmReady(nexo);
+        setIsConnect(true);
       })
       .catch((error) => {
         if (cancelled) {
@@ -71,16 +51,12 @@ const App = () => {
 
         console.error("[auth/frontend] Error conectando Nexo", error);
         setNexoFailed(true);
-      })
-      .finally(() => {
-        window.clearTimeout(timeoutId);
       });
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timeoutId);
     };
-  }, [isConnect, isInstalling, isEmbedded, nexoFailed, showInstallSuccess]);
+  }, [isInstalling, showInstallSuccess]);
 
   if (isInstalling) {
     return (
@@ -96,19 +72,11 @@ const App = () => {
   }
 
   if (showInstallSuccess) {
-    return (
-      <InstallSuccessScreen
-        onContinue={() => setShowInstallSuccess(false)}
-      />
-    );
-  }
-
-  if (!isEmbedded) {
-    return <StandaloneNoticeScreen />;
+    return <InstallSuccessScreen />;
   }
 
   if (!isConnect) {
-    if (nexoFailed) {
+    if (nexoFailed && !isTiendanubeEmbedded()) {
       return <StandaloneNoticeScreen />;
     }
 

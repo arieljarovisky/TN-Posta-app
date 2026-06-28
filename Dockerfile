@@ -12,7 +12,7 @@ RUN node .yarn/releases/yarn-3.2.2.cjs install
 COPY api ./api
 COPY frontend ./frontend
 
-ARG CLIENT_ID
+ARG CLIENT_ID=35321
 ENV VITE_CLIENT_ID=${CLIENT_ID}
 ENV VITE_API_URL=
 
