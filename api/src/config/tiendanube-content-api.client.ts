@@ -52,7 +52,7 @@ export const getTiendanubeContentApiBaseUrl = (): string => {
 export const tiendanubeContentApiClient = axios.create({
   baseURL: getTiendanubeContentApiBaseUrl(),
   headers: {
-    "Content-Type": "application/json",
+    "Content-Type": "application/json; charset=utf-8",
     "User-Agent": `${process.env.CLIENT_ID} (${process.env.CLIENT_EMAIL})`,
   },
 });
