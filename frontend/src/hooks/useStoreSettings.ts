@@ -5,6 +5,7 @@ import {
   updateStoreSettings,
 } from "@/services/settings.api";
 import { ShippingRateRule, ZoneLocalitiesMap } from "@/types/shipping";
+import { SenderConfig } from "@/services/settings.api";
 
 export const useStoreSettings = () => {
   const [enabled, setEnabled] = useState(false);
@@ -13,6 +14,7 @@ export const useStoreSettings = () => {
   const [carrierId, setCarrierId] = useState<number | null>(null);
   const [shippingRates, setShippingRates] = useState<ShippingRateRule[]>([]);
   const [zoneLocalities, setZoneLocalities] = useState<ZoneLocalitiesMap>({});
+  const [sender, setSender] = useState<SenderConfig>({ business_name: "TN Posta" });
   const [shippingOptionNames, setShippingOptionNames] = useState<string[]>([]);
   const [shippingSyncMessage, setShippingSyncMessage] = useState<string | null>(
     null
@@ -33,6 +35,7 @@ export const useStoreSettings = () => {
       setCarrierId(data.carrier_id ?? null);
       setShippingRates(data.shipping_rates ?? []);
       setZoneLocalities(data.zone_localities ?? {});
+      setSender(data.sender ?? { business_name: data.carrier_name ?? "TN Posta" });
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
     } catch {
@@ -61,6 +64,7 @@ export const useStoreSettings = () => {
       setCarrierId(data.carrier_id ?? null);
       setShippingRates(data.shipping_rates ?? []);
       setZoneLocalities(data.zone_localities ?? {});
+      setSender(data.sender ?? { business_name: data.carrier_name ?? "TN Posta" });
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
       setLoadError(null);
@@ -84,6 +88,7 @@ export const useStoreSettings = () => {
       setCarrierId(data.carrier_id ?? null);
       setShippingRates(data.shipping_rates ?? []);
       setZoneLocalities(data.zone_localities ?? {});
+      setSender(data.sender ?? { business_name: data.carrier_name ?? "TN Posta" });
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
       setLoadError(null);
@@ -101,6 +106,22 @@ export const useStoreSettings = () => {
     try {
       const data = await updateStoreSettings({ zone_localities: localities });
       setZoneLocalities(data.zone_localities ?? {});
+      setSender(data.sender ?? { business_name: data.carrier_name ?? "TN Posta" });
+      setLoadError(null);
+      return { success: true };
+    } catch {
+      return { success: false };
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveSenderConfig = async (payload: SenderConfig) => {
+    setSaving(true);
+
+    try {
+      const data = await updateStoreSettings({ sender: payload });
+      setSender(data.sender ?? payload);
       setLoadError(null);
       return { success: true };
     } catch {
@@ -117,6 +138,7 @@ export const useStoreSettings = () => {
     carrierId,
     shippingRates,
     zoneLocalities,
+    sender,
     shippingOptionNames,
     shippingSyncMessage,
     loading,
@@ -125,6 +147,7 @@ export const useStoreSettings = () => {
     toggleEnabled,
     saveShippingConfig,
     saveZoneLocalities,
+    saveSenderConfig,
     reloadSettings: loadSettings,
   };
 };

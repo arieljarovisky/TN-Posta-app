@@ -43,6 +43,15 @@ class ShipmentRepository {
       .value();
   }
 
+  findByTrackingCode(trackingCode: string): Shipment | undefined {
+    const normalized = trackingCode.trim().toUpperCase();
+
+    return database
+      .get("shipments")
+      .find((shipment) => shipment.tracking_code?.toUpperCase() === normalized)
+      .value();
+  }
+
   save(shipment: Shipment): Shipment {
     database.get("shipments").push(shipment).write();
     return shipment;

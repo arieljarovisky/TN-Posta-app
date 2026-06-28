@@ -48,6 +48,11 @@ export interface Shipment {
     zipcode: string;
   };
   notes?: string;
+  shipping_method?: string;
+  total_units?: number;
+  tracking_code?: string;
+  tracking_status?: "pending" | "preparing" | "shipped" | "delivered" | "cancelled";
+  tracking_status_updated_at?: string;
   created_at: string;
   label_generated_at?: string;
 }

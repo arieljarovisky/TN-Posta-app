@@ -8,6 +8,8 @@ import {
   Box,
   Button,
   Card,
+  Input,
+  Label,
   Spinner,
   Tag,
   Text,
@@ -22,6 +24,7 @@ import { ReinstallStoreAlert, ShippingPublishAlert, ShippingRatesEditor, ZoneCov
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useZoneCoverage } from "@/hooks/useZoneCoverage";
 import { ShippingRateRule, ZoneLocalitiesMap } from "@/types/shipping";
+import { SenderConfig } from "@/services/settings.api";
 import {
   clearInstallParamsFromUrl,
   getInstallStatusFromUrl,
@@ -43,9 +46,11 @@ const Home = () => {
     shippingRates,
     shippingSyncMessage,
     zoneLocalities,
+    sender,
     toggleEnabled,
     saveShippingConfig,
     saveZoneLocalities,
+    saveSenderConfig,
     reloadSettings,
   } = useStoreSettings();
   const {
@@ -58,6 +63,9 @@ const Home = () => {
   const [ratesInput, setRatesInput] = useState<ShippingRateRule[]>([]);
   const [zoneLocalitiesInput, setZoneLocalitiesInput] =
     useState<ZoneLocalitiesMap>({});
+  const [senderInput, setSenderInput] = useState<SenderConfig>({
+    business_name: "TN Posta",
+  });
 
   useEffect(() => {
     setCarrierNameInput(carrierName);
@@ -67,6 +75,10 @@ const Home = () => {
   useEffect(() => {
     setZoneLocalitiesInput(zoneLocalities);
   }, [zoneLocalities]);
+
+  useEffect(() => {
+    setSenderInput(sender);
+  }, [sender]);
 
   useEffect(() => {
     if (connected) {
@@ -161,6 +173,32 @@ const Home = () => {
         });
       }
 
+      return;
+    }
+
+    addToast({
+      id: crypto.randomUUID(),
+      type: "danger",
+      text: t("errors.generic"),
+      duration: 4000,
+    });
+  };
+
+  const handleSaveSender = async () => {
+    const result = await saveSenderConfig({
+      business_name: senderInput.business_name.trim() || "TN Posta",
+      address: senderInput.address?.trim(),
+      city: senderInput.city?.trim(),
+      phone: senderInput.phone?.trim(),
+    });
+
+    if (result.success) {
+      addToast({
+        id: crypto.randomUUID(),
+        type: "success",
+        text: t("home.senderSaved"),
+        duration: 4000,
+      });
       return;
     }
 
@@ -334,6 +372,84 @@ const Home = () => {
                       </Text>
                     </Box>
                   )}
+                  </Box>
+                </Card.Body>
+              </Card>
+
+              <Card>
+                <Card.Header title={t("home.senderTitle")} />
+                <Card.Body>
+                  <Box display="flex" flexDirection="column" gap="3">
+                    <Text fontSize="caption" color="neutral-textLow">
+                      {t("home.senderHelp")}
+                    </Text>
+                    <Box display="flex" flexDirection="column" gap="1">
+                      <Label htmlFor="sender-business">{t("home.senderBusinessName")}</Label>
+                      <Input
+                        id="sender-business"
+                        name="sender-business"
+                        value={senderInput.business_name}
+                        disabled={saving || loading}
+                        onChange={(event) =>
+                          setSenderInput((current) => ({
+                            ...current,
+                            business_name: event.target.value,
+                          }))
+                        }
+                      />
+                    </Box>
+                    <Box display="flex" flexDirection="column" gap="1">
+                      <Label htmlFor="sender-address">{t("home.senderAddress")}</Label>
+                      <Input
+                        id="sender-address"
+                        name="sender-address"
+                        value={senderInput.address ?? ""}
+                        disabled={saving || loading}
+                        onChange={(event) =>
+                          setSenderInput((current) => ({
+                            ...current,
+                            address: event.target.value,
+                          }))
+                        }
+                      />
+                    </Box>
+                    <Box display="flex" flexDirection="column" gap="1">
+                      <Label htmlFor="sender-city">{t("home.senderCity")}</Label>
+                      <Input
+                        id="sender-city"
+                        name="sender-city"
+                        value={senderInput.city ?? ""}
+                        disabled={saving || loading}
+                        onChange={(event) =>
+                          setSenderInput((current) => ({
+                            ...current,
+                            city: event.target.value,
+                          }))
+                        }
+                      />
+                    </Box>
+                    <Box display="flex" flexDirection="column" gap="1">
+                      <Label htmlFor="sender-phone">{t("home.senderPhone")}</Label>
+                      <Input
+                        id="sender-phone"
+                        name="sender-phone"
+                        value={senderInput.phone ?? ""}
+                        disabled={saving || loading}
+                        onChange={(event) =>
+                          setSenderInput((current) => ({
+                            ...current,
+                            phone: event.target.value,
+                          }))
+                        }
+                      />
+                    </Box>
+                    <Button
+                      appearance="primary"
+                      disabled={saving || loading}
+                      onClick={handleSaveSender}
+                    >
+                      {saving ? "Guardando..." : "Guardar remitente"}
+                    </Button>
                   </Box>
                 </Card.Body>
               </Card>

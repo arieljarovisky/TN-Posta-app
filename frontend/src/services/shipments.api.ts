@@ -1,5 +1,20 @@
 import axios from "@/app/Axios";
+import {
+  buildTnPostaLabelHtml,
+  buildTnPostaLabelsBulkHtml,
+  LabelPrintItem,
+  openPrintableHtml,
+  SenderConfig,
+} from "@/utils/tnPostaLabelHtml";
 import { OrderSummary, Shipment } from "@/types/api";
+
+export interface AssignTrackingResponse {
+  shipment: Shipment;
+  trackingCode: string;
+  assigned: boolean;
+  trackingStatus?: string;
+  sender: SenderConfig | null;
+}
 
 export const fetchEligibleOrders = async (): Promise<OrderSummary[]> => {
   const { data } = await axios.get<OrderSummary[]>("/orders", {
@@ -31,20 +46,49 @@ export const fetchShipments = async (): Promise<Shipment[]> => {
   return data;
 };
 
-export const downloadShipmentLabel = async (
-  shipmentId: string,
-  orderNumber: number
-): Promise<void> => {
-  const { data } = await axios.get<Blob>(`/shipments/${shipmentId}/label`, {
-    responseType: "blob",
-  });
+export const assignShipmentTracking = async (
+  shipmentId: string
+): Promise<AssignTrackingResponse> => {
+  const { data } = await axios.post<AssignTrackingResponse>(
+    `/shipments/${shipmentId}/tracking/assign`
+  );
 
-  const url = window.URL.createObjectURL(data);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `etiqueta-pedido-${orderNumber}.pdf`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
+  return data;
+};
+
+const defaultSender = (): SenderConfig => ({
+  business_name: "TN Posta",
+});
+
+export const printShipmentLabel = async (shipment: Shipment): Promise<Shipment> => {
+  const { shipment: updated, trackingCode, sender } =
+    await assignShipmentTracking(shipment.id);
+
+  const html = buildTnPostaLabelHtml(updated, trackingCode, sender ?? defaultSender());
+  openPrintableHtml(html);
+
+  return updated;
+};
+
+export const printShipmentLabelsBulk = async (
+  shipments: Shipment[]
+): Promise<Shipment[]> => {
+  const items: LabelPrintItem[] = [];
+  let sender = defaultSender();
+  const updatedShipments: Shipment[] = [];
+
+  for (const shipment of shipments) {
+    const result = await assignShipmentTracking(shipment.id);
+    sender = result.sender ?? sender;
+    items.push({
+      shipment: result.shipment,
+      trackingCode: result.trackingCode,
+    });
+    updatedShipments.push(result.shipment);
+  }
+
+  const html = buildTnPostaLabelsBulkHtml(items, sender);
+  openPrintableHtml(html);
+
+  return updatedShipments;
 };

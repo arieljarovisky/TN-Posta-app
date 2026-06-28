@@ -6,6 +6,7 @@ import {
 import { StoreSettings } from "@features/settings/interfaces/store-settings.interface";
 import { ShippingRateRule } from "@features/shipping/interfaces/shipping.interfaces";
 import { BadRequestException } from "@utils";
+import { SenderConfig } from "@features/settings/interfaces/store-settings.interface";
 import {
   normalizeZoneLocalitiesMap,
   ZoneLocalitiesMap,
@@ -51,6 +52,7 @@ class SettingsService {
       carrier_name?: string;
       shipping_rates?: ShippingRateRule[];
       zone_localities?: ZoneLocalitiesMap;
+      sender?: SenderConfig;
     }
   ): Promise<{ settings: StoreSettings; shipping_sync_message?: string }> {
     const current = settingsRepository.getByStoreId(storeId);
@@ -104,12 +106,22 @@ class SettingsService {
       }
     }
 
+    const normalizedSender = data.sender
+      ? {
+          business_name: String(data.sender.business_name ?? current.sender?.business_name ?? "TN Posta").trim(),
+          address: data.sender.address?.trim() || current.sender?.address,
+          city: data.sender.city?.trim() || current.sender?.city,
+          phone: data.sender.phone?.trim() || current.sender?.phone,
+        }
+      : current.sender;
+
     const settings = settingsRepository.updateStoreSettings(storeId, {
       enabled: data.enabled ?? current.enabled,
       shipping_option_names: shippingOptionNames,
       carrier_name: data.carrier_name ?? current.carrier_name,
       shipping_rates: normalizedRates,
       zone_localities: normalizedZoneLocalities,
+      sender: normalizedSender,
     });
 
     let shipping_sync_message: string | undefined;

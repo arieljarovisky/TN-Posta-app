@@ -8,6 +8,7 @@ import { SettingsController } from "@features/settings";
 import { ShipmentController } from "@features/shipment";
 import { ShippingController } from "@features/shipping";
 import { ZoneController } from "@features/zone";
+import { PublicTrackingController } from "@features/public";
 import { WebhookController } from "@features/webhook";
 import { requireServiceEnabledMiddleware, requireStoreCredentialsMiddleware } from "@middlewares";
 
@@ -20,6 +21,11 @@ routes.get("/auth/status", AuthenticationController.status);
 routes.get("/auth/debug", AuthenticationController.debug);
 
 routes.post("/shipping/rates", ShippingController.calculateRates);
+
+routes.get("/api/public/tracking/:trackingCode", PublicTrackingController.getTracking);
+routes.get("/api/public/tracking", PublicTrackingController.getTracking);
+routes.get("/api/public/entrega/:trackingCode", PublicTrackingController.getDeliveryPage);
+routes.post("/api/public/entrega/:trackingCode", PublicTrackingController.confirmDelivery);
 
 routes.post("/webhooks/store/redact", WebhookController.storeRedact);
 routes.post("/webhooks/customers/redact", WebhookController.customersRedact);
@@ -81,12 +87,26 @@ apiRoutes.post(
   requireServiceEnabledMiddleware,
   ShipmentController.create
 );
+apiRoutes.post(
+  "/shipments/:shipmentId/tracking/assign",
+  passport.authenticate("jwt", { session: false }),
+  requireStoreCredentialsMiddleware,
+  requireServiceEnabledMiddleware,
+  ShipmentController.assignTracking
+);
+apiRoutes.patch(
+  "/shipments/:shipmentId/tracking/status",
+  passport.authenticate("jwt", { session: false }),
+  requireStoreCredentialsMiddleware,
+  requireServiceEnabledMiddleware,
+  ShipmentController.updateTrackingStatus
+);
 apiRoutes.get(
   "/shipments/:shipmentId/label",
   passport.authenticate("jwt", { session: false }),
   requireStoreCredentialsMiddleware,
   requireServiceEnabledMiddleware,
-  ShipmentController.downloadLabel
+  ShipmentController.assignTracking
 );
 apiRoutes.post(
   "/products",

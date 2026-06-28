@@ -66,6 +66,9 @@ class SettingsController {
           },
           {} as Record<string, string[]>
         ),
+        sender: data.sender ?? {
+          business_name: data.carrier_name ?? "TN Posta",
+        },
         updated_at: data.updated_at,
       });
     } catch (error) {
@@ -133,6 +136,7 @@ class SettingsController {
           carrier_name: payload.carrier_name?.trim(),
           shipping_rates: payload.shipping_rates,
           zone_localities: payload.zone_localities,
+          sender: payload.sender,
         });
       const connected = Boolean(
         userRepository.findOptional(+req.user.user_id)?.access_token
@@ -152,6 +156,9 @@ class SettingsController {
           },
           {} as Record<string, string[]>
         ),
+        sender: settings.sender ?? {
+          business_name: settings.carrier_name ?? "TN Posta",
+        },
         shipping_sync_message,
         updated_at: settings.updated_at,
       });

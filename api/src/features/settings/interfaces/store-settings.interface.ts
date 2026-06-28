@@ -5,6 +5,13 @@ import {
 
 export type ZoneLocalitiesMap = Partial<Record<ShippingRateZone, string[]>>;
 
+export interface SenderConfig {
+  business_name: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+}
+
 export interface StoreSettings {
   store_id: number;
   enabled: boolean;
@@ -13,6 +20,7 @@ export interface StoreSettings {
   carrier_name?: string;
   shipping_rates?: ShippingRateRule[];
   zone_localities?: ZoneLocalitiesMap;
+  sender?: SenderConfig;
   updated_at: string;
 }
 
@@ -22,6 +30,7 @@ export interface UpdateStoreSettingsRequest {
   carrier_name?: string;
   shipping_rates?: ShippingRateRule[];
   zone_localities?: ZoneLocalitiesMap;
+  sender?: SenderConfig;
 }
 
 export interface StoreSettingsResponse {
@@ -32,6 +41,7 @@ export interface StoreSettingsResponse {
   carrier_name?: string;
   shipping_rates: ShippingRateRule[];
   zone_localities?: ZoneLocalitiesMap;
+  sender?: SenderConfig;
   shipping_sync_message?: string;
   updated_at: string;
 }

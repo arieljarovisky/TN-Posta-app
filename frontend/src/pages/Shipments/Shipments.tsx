@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   Card,
+  Checkbox,
   Spinner,
   Tag,
   Text,
@@ -19,8 +20,9 @@ import { nexo } from "@/app";
 import { ReinstallStoreAlert, Responsive } from "@/components";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import {
-  downloadShipmentLabel,
   fetchShipments,
+  printShipmentLabel,
+  printShipmentLabelsBulk,
 } from "@/services/shipments.api";
 import { Shipment } from "@/types/api";
 
@@ -36,7 +38,9 @@ const Shipments = () => {
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [needsReconnect, setNeedsReconnect] = useState(false);
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [printingId, setPrintingId] = useState<string | null>(null);
+  const [printingBulk, setPrintingBulk] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const showToast = (type: "success" | "danger", text: string) => {
     addToast({
@@ -53,6 +57,7 @@ const Shipments = () => {
 
     try {
       setShipments(await fetchShipments());
+      setSelectedIds([]);
     } catch (error) {
       if (isUnauthorizedError(error)) {
         setNeedsReconnect(true);
@@ -80,17 +85,50 @@ const Shipments = () => {
     }
   }, [connected, loadShipments, serviceEnabled, settingsLoading, t]);
 
-  const handleDownload = async (shipment: Shipment) => {
-    setDownloadingId(shipment.id);
+  const toggleSelection = (shipmentId: string) => {
+    setSelectedIds((current) =>
+      current.includes(shipmentId)
+        ? current.filter((id) => id !== shipmentId)
+        : [...current, shipmentId]
+    );
+  };
+
+  const handlePrint = async (shipment: Shipment) => {
+    setPrintingId(shipment.id);
 
     try {
-      await downloadShipmentLabel(shipment.id, shipment.order_number);
-      showToast("success", `Etiqueta descargada - pedido #${shipment.order_number}`);
+      await printShipmentLabel(shipment);
+      showToast("success", `Etiqueta lista - pedido #${shipment.order_number}`);
       await loadShipments();
     } catch {
       showToast("danger", t("errors.generic"));
     } finally {
-      setDownloadingId(null);
+      setPrintingId(null);
+    }
+  };
+
+  const handlePrintBulk = async () => {
+    const selected = shipments.filter((shipment) =>
+      selectedIds.includes(shipment.id)
+    );
+
+    if (selected.length === 0) {
+      return;
+    }
+
+    setPrintingBulk(true);
+
+    try {
+      await printShipmentLabelsBulk(selected);
+      showToast(
+        "success",
+        `${selected.length} etiqueta${selected.length !== 1 ? "s" : ""} lista${selected.length !== 1 ? "s" : ""} para imprimir`
+      );
+      await loadShipments();
+    } catch {
+      showToast("danger", t("errors.generic"));
+    } finally {
+      setPrintingBulk(false);
     }
   };
 
@@ -98,7 +136,13 @@ const Shipments = () => {
     <Card key={shipment.id}>
       <Card.Header title={`${t("shipments.order")} #${shipment.order_number}`} />
       <Card.Body>
-        <Box display="flex" flexDirection="column" gap="1">
+        <Box display="flex" flexDirection="column" gap="2">
+          <Checkbox
+            name={`select-${shipment.id}`}
+            label="Seleccionar para impresion masiva"
+            checked={selectedIds.includes(shipment.id)}
+            onChange={() => toggleSelection(shipment.id)}
+          />
           <Text fontWeight="medium">{shipment.recipient.name}</Text>
           <Text>
             {shipment.destination.street} {shipment.destination.number},{" "}
@@ -107,6 +151,11 @@ const Shipments = () => {
           <Tag appearance="primary">
             {t("shipments.zone")}: {shipment.zone}
           </Tag>
+          {shipment.tracking_code && (
+            <Tag appearance="success">
+              {t("shipments.trackingCode")}: {shipment.tracking_code}
+            </Tag>
+          )}
           <Tag appearance="neutral">
             {t("shipments.status")}:{" "}
             {shipment.status === "label_generated"
@@ -118,15 +167,15 @@ const Shipments = () => {
       <Card.Footer>
         <Button
           appearance="primary"
-          disabled={downloadingId === shipment.id}
-          onClick={() => handleDownload(shipment)}
+          disabled={printingId === shipment.id || printingBulk}
+          onClick={() => handlePrint(shipment)}
         >
-          {downloadingId === shipment.id ? (
+          {printingId === shipment.id ? (
             <Spinner size="small" />
           ) : (
             <DownloadIcon size="small" />
           )}
-          {t("shipments.downloadLabel")}
+          {t("shipments.printLabel")}
         </Button>
       </Card.Footer>
     </Card>
@@ -160,6 +209,29 @@ const Shipments = () => {
                 title={t("home.reconnectTitle")}
                 description={t("shipments.reconnectRequired")}
               />
+            )}
+
+            {!loading && !settingsLoading && serviceEnabled && !needsReconnect && shipments.length > 0 && (
+              <Box display="flex" flexDirection="column" gap="3" paddingBottom="3">
+                <Alert appearance="neutral" title={t("shipments.labelHelpTitle")}>
+                  <Text>{t("shipments.labelHelpBody")}</Text>
+                </Alert>
+                {selectedIds.length > 0 && (
+                  <Box>
+                    <Button
+                      appearance="primary"
+                      disabled={printingBulk}
+                      onClick={handlePrintBulk}
+                    >
+                      {printingBulk ? (
+                        <Spinner size="small" />
+                      ) : (
+                        t("shipments.printSelected", { count: selectedIds.length })
+                      )}
+                    </Button>
+                  </Box>
+                )}
+              </Box>
             )}
 
             {!loading && !settingsLoading && serviceEnabled && !needsReconnect && shipments.length === 0 && (

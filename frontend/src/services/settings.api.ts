@@ -1,6 +1,13 @@
 import axios from "@/app/Axios";
 import { ShippingRateRule, ZoneLocalitiesMap } from "@/types/shipping";
 
+export interface SenderConfig {
+  business_name: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+}
+
 export interface StoreSettingsResponse {
   enabled: boolean;
   connected: boolean;
@@ -9,6 +16,7 @@ export interface StoreSettingsResponse {
   carrier_name?: string;
   shipping_rates: ShippingRateRule[];
   zone_localities?: ZoneLocalitiesMap;
+  sender?: SenderConfig;
   shipping_sync_message?: string;
   updated_at: string;
 }
@@ -24,6 +32,7 @@ export const updateStoreSettings = async (payload: {
   carrier_name?: string;
   shipping_rates?: ShippingRateRule[];
   zone_localities?: ZoneLocalitiesMap;
+  sender?: SenderConfig;
 }): Promise<StoreSettingsResponse> => {
   const { data } = await axios.patch<StoreSettingsResponse>("/settings", payload);
 

@@ -38,7 +38,15 @@ const resources = {
         shippingRatesRequired: "Agrega al menos una tarifa con nombre y precio.",
         shipmentsCard: "Ver envios creados",
         shipmentsCardHelp:
-          "Consulta envios ya creados y descarga las etiquetas en PDF.",
+          "Consulta envios ya creados e imprime etiquetas TN Posta (100x150 mm o 4 por A4).",
+        senderTitle: "Datos del remitente",
+        senderHelp:
+          "Aparecen en la etiqueta impresa. Configuralos antes de imprimir.",
+        senderBusinessName: "Empresa / nombre comercial",
+        senderAddress: "Direccion",
+        senderCity: "Ciudad",
+        senderPhone: "Telefono",
+        senderSaved: "Datos del remitente guardados.",
         coverageTitle: "Cobertura por barrio",
         coverageBody:
           "Agrega o quita barrios y partidos incluidos en cada zona de envio.",
@@ -70,7 +78,12 @@ const resources = {
         serviceDisabled: "Activa TN Posta desde la pantalla principal para ver envios.",
         reconnectRequired:
           "La tienda no esta conectada. Reconectala para consultar envios.",
-        downloadLabel: "Descargar etiqueta",
+        printLabel: "Imprimir etiqueta",
+        printSelected: "Imprimir {{count}} etiquetas (A4)",
+        trackingCode: "Seguimiento",
+        labelHelpTitle: "Etiquetas TN Posta",
+        labelHelpBody:
+          "Se abre una ventana imprimible (100x150 mm). Guarda como PDF desde el navegador. El codigo TPA incluye barcode y QR para el repartidor.",
         order: "Pedido",
         zone: "Zona",
         status: "Estado",

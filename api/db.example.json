@@ -1,5 +1,8 @@
 {
   "credentials": [],
   "shipments": [],
-  "store_settings": []
+  "store_settings": [],
+  "tracking_sequence": {
+    "next_value": 100001
+  }
 }
