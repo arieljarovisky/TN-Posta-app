@@ -20,6 +20,8 @@ export interface StoreSettingsResponse {
   tracking_page_enabled?: boolean;
   tracking_page_title?: string;
   tracking_page_url?: string;
+  tracking_page_embed_script_url?: string;
+  tracking_page_embed_html?: string;
   store_public_url?: string | null;
   shipping_sync_message?: string;
   updated_at: string;

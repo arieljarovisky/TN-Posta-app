@@ -13,6 +13,7 @@ import {
   LEGACY_SHIPPING_PAGE_PATH,
   PUBLIC_SHIPPING_PAGE_PATH,
 } from "@config/public-pages";
+import { PUBLIC_EMBED_SCRIPT_PATH, PUBLIC_ENVIO_API_PATH } from "@features/public/embed-widget";
 import { WebhookController } from "@features/webhook";
 import { requireServiceEnabledMiddleware, requireStoreCredentialsMiddleware } from "@middlewares";
 
@@ -28,6 +29,9 @@ routes.post("/shipping/rates", ShippingController.calculateRates);
 
 routes.get("/api/public/tracking/:trackingCode", PublicTrackingController.getTracking);
 routes.get("/api/public/tracking", PublicTrackingController.getTracking);
+routes.get(`${PUBLIC_ENVIO_API_PATH}/:trackingCode`, PublicTrackingController.getTracking);
+routes.get(PUBLIC_ENVIO_API_PATH, PublicTrackingController.getTracking);
+routes.get(PUBLIC_EMBED_SCRIPT_PATH, PublicTrackingController.getEmbedScript);
 routes.get(PUBLIC_SHIPPING_PAGE_PATH, PublicTrackingController.getTrackingPage);
 routes.get(`${PUBLIC_SHIPPING_PAGE_PATH}/:trackingCode`, PublicTrackingController.getTrackingPage);
 routes.get(LEGACY_SHIPPING_PAGE_PATH, PublicTrackingController.redirectLegacyTrackingPage);

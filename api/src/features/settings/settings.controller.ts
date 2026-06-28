@@ -7,6 +7,8 @@ import { userRepository } from "@repository";
 import { BadRequestException, StatusCode } from "@utils";
 import { getAllZoneCoverage } from "@utils/zone/zone-coverage";
 import {
+  getPublicEmbedHtml,
+  getPublicEmbedScriptUrl,
   getPublicTrackingPageUrl,
   getStorePublicUrl,
 } from "@config/oauth-urls";
@@ -37,6 +39,8 @@ const buildSettingsResponse = (
   tracking_page_enabled: data.tracking_page_enabled ?? false,
   tracking_page_title: data.tracking_page_title ?? "Seguimiento de envio",
   tracking_page_url: getPublicTrackingPageUrl(req),
+  tracking_page_embed_script_url: getPublicEmbedScriptUrl(req),
+  tracking_page_embed_html: getPublicEmbedHtml(req),
   store_public_url: getStorePublicUrl() ?? null,
   shipping_sync_message,
   updated_at: data.updated_at,

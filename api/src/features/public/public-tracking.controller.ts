@@ -1,6 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 
+import { getAppPublicBaseUrl } from "@config/oauth-urls";
 import { buildDeliveryPageHtml } from "@features/public/delivery-page";
+import { buildEmbedScript } from "@features/public/embed-widget";
 import {
   buildPublicTrackingPayload,
 } from "@features/public/tracking-data";
@@ -15,6 +17,29 @@ import { settingsRepository } from "@repository";
 import { StatusCode } from "@utils";
 
 class PublicTrackingController {
+  getEmbedScript(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Response | void {
+    try {
+      const origin = getAppPublicBaseUrl(req);
+
+      if (!origin) {
+        return res
+          .status(StatusCode.INTERNAL_SERVER_ERROR)
+          .send("// APP_PUBLIC_URL no configurada");
+      }
+
+      res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+      res.setHeader("Cache-Control", "public, max-age=300");
+
+      return res.send(buildEmbedScript(origin));
+    } catch (error) {
+      next(error);
+    }
+  }
+
   getTracking(
     req: Request,
     res: Response,

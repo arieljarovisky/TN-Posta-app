@@ -18,6 +18,7 @@ export const useStoreSettings = () => {
   const [trackingPageEnabled, setTrackingPageEnabled] = useState(false);
   const [trackingPageTitle, setTrackingPageTitle] = useState("Seguimiento de envio");
   const [trackingPageUrl, setTrackingPageUrl] = useState("");
+  const [trackingPageEmbedHtml, setTrackingPageEmbedHtml] = useState("");
   const [storePublicUrl, setStorePublicUrl] = useState<string | null>(null);
   const [shippingOptionNames, setShippingOptionNames] = useState<string[]>([]);
   const [shippingSyncMessage, setShippingSyncMessage] = useState<string | null>(
@@ -43,6 +44,7 @@ export const useStoreSettings = () => {
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
       setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
       setTrackingPageUrl(data.tracking_page_url ?? "");
+      setTrackingPageEmbedHtml(data.tracking_page_embed_html ?? "");
       setStorePublicUrl(data.store_public_url ?? null);
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
@@ -76,6 +78,7 @@ export const useStoreSettings = () => {
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
       setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
       setTrackingPageUrl(data.tracking_page_url ?? "");
+      setTrackingPageEmbedHtml(data.tracking_page_embed_html ?? "");
       setStorePublicUrl(data.store_public_url ?? null);
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
@@ -104,6 +107,7 @@ export const useStoreSettings = () => {
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
       setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
       setTrackingPageUrl(data.tracking_page_url ?? "");
+      setTrackingPageEmbedHtml(data.tracking_page_embed_html ?? "");
       setStorePublicUrl(data.store_public_url ?? null);
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
@@ -126,6 +130,7 @@ export const useStoreSettings = () => {
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
       setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
       setTrackingPageUrl(data.tracking_page_url ?? "");
+      setTrackingPageEmbedHtml(data.tracking_page_embed_html ?? "");
       setStorePublicUrl(data.store_public_url ?? null);
       setLoadError(null);
       return { success: true };
@@ -162,6 +167,7 @@ export const useStoreSettings = () => {
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
       setTrackingPageTitle(data.tracking_page_title ?? "Seguimiento de envio");
       setTrackingPageUrl(data.tracking_page_url ?? "");
+      setTrackingPageEmbedHtml(data.tracking_page_embed_html ?? "");
       setStorePublicUrl(data.store_public_url ?? null);
       setLoadError(null);
       return { success: true };
@@ -183,6 +189,7 @@ export const useStoreSettings = () => {
     trackingPageEnabled,
     trackingPageTitle,
     trackingPageUrl,
+    trackingPageEmbedHtml,
     storePublicUrl,
     shippingOptionNames,
     shippingSyncMessage,

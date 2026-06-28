@@ -4,6 +4,7 @@ type TrackingPagePanelProps = {
   enabled: boolean;
   title: string;
   pageUrl?: string;
+  embedHtml?: string;
   storePublicUrl?: string | null;
   disabled?: boolean;
   saving?: boolean;
@@ -16,6 +17,7 @@ const TrackingPagePanel = ({
   enabled,
   title,
   pageUrl = "",
+  embedHtml = "",
   storePublicUrl,
   disabled = false,
   saving = false,
@@ -23,33 +25,21 @@ const TrackingPagePanel = ({
   onTitleChange,
   onSave,
 }: TrackingPagePanelProps) => {
-  const copyUrl = async () => {
-    if (!pageUrl) {
+  const copyText = async (value: string, promptLabel: string) => {
+    if (!value) {
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(pageUrl);
+      await navigator.clipboard.writeText(value);
     } catch {
-      window.prompt("Copia esta URL:", pageUrl);
+      window.prompt(promptLabel, value);
     }
   };
 
-  const embedCode = pageUrl
+  const iframeCode = pageUrl
     ? `<iframe src="${pageUrl}?embed=1" title="Consulta de envio" width="100%" height="480" style="border:0;border-radius:12px;background:#fff;" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`
     : "";
-
-  const copyEmbed = async () => {
-    if (!embedCode) {
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(embedCode);
-    } catch {
-      window.prompt("Copia este codigo:", embedCode);
-    }
-  };
 
   return (
     <Box display="flex" flexDirection="column" gap="4">
@@ -91,31 +81,86 @@ const TrackingPagePanel = ({
           borderRadius="2"
           display="flex"
           flexDirection="column"
-          gap="2"
+          gap="3"
         >
-          <Text fontWeight="medium">URL para tu tienda</Text>
-          <Text fontSize="caption" color="neutral-textLow">
-            En Tiendanube: Paginas → Nueva pagina, o agrega un enlace en el menu
-            apuntando a esta URL.
-          </Text>
-          <Text fontSize="caption">{pageUrl}</Text>
-          <Box display="flex" flexWrap="wrap" gap="2">
-            <Button appearance="neutral" disabled={!enabled} onClick={copyUrl}>
-              Copiar URL
-            </Button>
+          <Box display="flex" flexDirection="column" gap="2">
+            <Text fontWeight="medium">Codigo para Tiendanube (recomendado)</Text>
+            <Text fontSize="caption" color="neutral-textLow">
+              Tiendanube bloquea iframes externos: el recuadro queda en blanco. En
+              su lugar, pega este codigo en Paginas → Seguimiento de envios →
+              editor HTML.
+            </Text>
+            {embedHtml && (
+              <Box
+                as="pre"
+                padding="3"
+                backgroundColor="neutral-background"
+                borderRadius="2"
+                style={{
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-all",
+                  margin: 0,
+                  border: "1px solid #e5e7eb",
+                  fontSize: "12px",
+                }}
+              >
+                {embedHtml}
+              </Box>
+            )}
+            <Box display="flex" flexWrap="wrap" gap="2">
+              <Button
+                appearance="primary"
+                disabled={!enabled || !embedHtml}
+                onClick={() =>
+                  copyText(embedHtml, "Copia este codigo para Tiendanube:")
+                }
+              >
+                Copiar codigo HTML
+              </Button>
+            </Box>
+          </Box>
+
+          <Box display="flex" flexDirection="column" gap="2">
+            <Text fontWeight="medium">Enlace en el menu</Text>
+            <Text fontSize="caption" color="neutral-textLow">
+              Alternativa: agrega un enlace en el menu apuntando a esta URL (abre la
+              consulta en una pagina completa).
+            </Text>
+            <Text fontSize="caption">{pageUrl}</Text>
+            <Box display="flex" flexWrap="wrap" gap="2">
+              <Button
+                appearance="neutral"
+                disabled={!enabled}
+                onClick={() => copyText(pageUrl, "Copia esta URL:")}
+              >
+                Copiar URL
+              </Button>
+              <Button
+                as="a"
+                appearance="neutral"
+                href={pageUrl}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Ver pagina
+              </Button>
+            </Box>
+          </Box>
+
+          <Box display="flex" flexDirection="column" gap="2">
+            <Text fontWeight="medium">Iframe (no funciona en Tiendanube)</Text>
+            <Text fontSize="caption" color="neutral-textLow">
+              Solo util si tu sitio permite embeber paginas externas.
+            </Text>
             <Button
-              as="a"
               appearance="neutral"
-              href={pageUrl}
-              target="_blank"
-              rel="noreferrer"
+              disabled={!enabled || !iframeCode}
+              onClick={() => copyText(iframeCode, "Copia este iframe:")}
             >
-              Ver pagina
-            </Button>
-            <Button appearance="neutral" disabled={!enabled} onClick={copyEmbed}>
               Copiar iframe
             </Button>
           </Box>
+
           {storePublicUrl && (
             <Text fontSize="caption" color="neutral-textLow">
               Tienda: {storePublicUrl}
@@ -130,12 +175,6 @@ const TrackingPagePanel = ({
           codigo.
         </Text>
       )}
-
-      <Text fontSize="caption" color="neutral-textLow">
-        Si el iframe queda en blanco, desactiva el bloqueador de anuncios o usa
-        la URL como enlace en el menu. Algunos bloqueadores filtran rutas con
-        palabras como seguimiento o tracking.
-      </Text>
 
       <Button appearance="primary" disabled={disabled || saving} onClick={onSave}>
         {saving ? "Guardando..." : "Guardar pagina de seguimiento"}

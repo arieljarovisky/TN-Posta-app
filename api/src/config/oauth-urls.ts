@@ -1,3 +1,7 @@
+import {
+  buildEmbedHtmlSnippet,
+  PUBLIC_EMBED_SCRIPT_PATH,
+} from "@features/public/embed-widget";
 import { PUBLIC_SHIPPING_PAGE_PATH } from "./public-pages";
 
 export const getClientId = (): string => process.env.CLIENT_ID ?? "35321";
@@ -74,6 +78,20 @@ export const getPublicTrackingPageUrl = (req?: {
 
   return base ? `${base}${PUBLIC_SHIPPING_PAGE_PATH}` : PUBLIC_SHIPPING_PAGE_PATH;
 };
+
+export const getPublicEmbedScriptUrl = (req?: {
+  protocol?: string;
+  get?: (name: string) => string | undefined;
+}): string => {
+  const base = getAppPublicBaseUrl(req);
+
+  return base ? `${base}${PUBLIC_EMBED_SCRIPT_PATH}` : PUBLIC_EMBED_SCRIPT_PATH;
+};
+
+export const getPublicEmbedHtml = (req?: {
+  protocol?: string;
+  get?: (name: string) => string | undefined;
+}): string => buildEmbedHtmlSnippet(getAppPublicBaseUrl(req));
 
 export const getStorePublicUrl = (): string | undefined => {
   const slug = getStoreSlug();

@@ -50,6 +50,7 @@ const Home = () => {
     trackingPageEnabled,
     trackingPageTitle,
     trackingPageUrl,
+    trackingPageEmbedHtml,
     storePublicUrl,
     toggleEnabled,
     saveShippingConfig,
@@ -499,6 +500,7 @@ const Home = () => {
                     enabled={trackingPageEnabledInput}
                     title={trackingPageTitleInput}
                     pageUrl={trackingPageUrl}
+                    embedHtml={trackingPageEmbedHtml}
                     storePublicUrl={storePublicUrl}
                     disabled={loading}
                     saving={saving}
