@@ -1,7 +1,16 @@
-import ReactDOM from "react-dom/client";
-import App from "@/app";
+import { connectNexo } from "./app/nexoBootstrap";
 
-import "@nimbus-ds/styles/dist/index.css";
-import "./main.css";
+const loadApp = (): Promise<void> =>
+  import("./bootstrap").then(({ renderApp }) => {
+    renderApp();
+  });
 
-ReactDOM.createRoot(document.getElementById("root")!).render(<App />);
+const renderTimeout = window.setTimeout(() => {
+  console.warn("[auth/frontend] Renderizando app tras timeout de Nexo");
+  loadApp();
+}, 4000);
+
+connectNexo().finally(() => {
+  window.clearTimeout(renderTimeout);
+  loadApp();
+});

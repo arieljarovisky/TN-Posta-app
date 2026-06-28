@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { BrowserRouter } from "react-router-dom";
-import { Box, Text, ToastProvider } from "@nimbus-ds/components";
-import { connect, ErrorBoundary, iAmReady } from "@tiendanube/nexo";
+import { ToastProvider } from "@nimbus-ds/components";
+import { ErrorBoundary } from "@tiendanube/nexo";
 
 import Router from "./Router";
-import nexo from "./NexoClient";
 import NexoSyncRoute from "./NexoSyncRoute";
 import { DarkModeProvider } from "./DarkModeProvider";
 import {
@@ -14,81 +13,51 @@ import {
 import { isTiendanubeEmbedded } from "./oauth/installUi";
 import InstallSuccessScreen from "./oauth/InstallSuccessScreen";
 import StandaloneNoticeScreen from "./oauth/StandaloneNoticeScreen";
+import { getNexoStatus, nexo } from "./nexoBootstrap";
 import "./I18n";
 
+const LoadingScreen = ({ message }: { message: string }) => (
+  <div
+    style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontFamily: "system-ui, sans-serif",
+      color: "#1a1a1a",
+    }}
+  >
+    {message}
+  </div>
+);
+
 const App = () => {
-  const [isConnect, setIsConnect] = useState(false);
-  const [nexoFailed, setNexoFailed] = useState(false);
   const [isInstalling] = useState(() => completeOAuthInstallIfNeeded());
   const [showInstallSuccess] = useState(
     () =>
       !isTiendanubeEmbedded() && getInstallStatusFromUrl().installed
   );
-
-  useEffect(() => {
-    if (isInstalling || showInstallSuccess) {
-      return;
-    }
-
-    let cancelled = false;
-
-    console.info("[auth/frontend] Iniciando connect Nexo...");
-
-    connect(nexo)
-      .then(() => {
-        if (cancelled) {
-          return;
-        }
-
-        console.info("[auth/frontend] Nexo conectado, enviando iAmReady");
-        iAmReady(nexo);
-        setIsConnect(true);
-      })
-      .catch((error) => {
-        if (cancelled) {
-          return;
-        }
-
-        console.error("[auth/frontend] Error conectando Nexo", error);
-        setNexoFailed(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isInstalling, showInstallSuccess]);
+  const nexoStatus = getNexoStatus();
 
   if (isInstalling) {
-    return (
-      <Box
-        height="100vh"
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-      >
-        <Text>Instalando aplicacion...</Text>
-      </Box>
-    );
+    return <LoadingScreen message="Instalando aplicacion..." />;
   }
 
   if (showInstallSuccess) {
     return <InstallSuccessScreen />;
   }
 
-  if (!isConnect) {
-    if (nexoFailed && !isTiendanubeEmbedded()) {
-      return <StandaloneNoticeScreen />;
-    }
+  if (nexoStatus === "pending") {
+    return <LoadingScreen message="Conectando..." />;
+  }
 
+  if (nexoStatus === "failed" && !isTiendanubeEmbedded()) {
+    return <StandaloneNoticeScreen />;
+  }
+
+  if (nexoStatus === "failed") {
     return (
-      <Box
-        height="100vh"
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-      >
-        <Text>Conectando...</Text>
-      </Box>
+      <LoadingScreen message="No se pudo conectar con Tiendanube. Recarga la pagina." />
     );
   }
 

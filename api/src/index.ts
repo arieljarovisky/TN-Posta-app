@@ -26,6 +26,27 @@ const port = process.env.PORT || 7200;
 const app = express();
 const frontendDist = path.resolve(process.cwd(), "../frontend/dist");
 
+const serveFrontendIndex = (
+  _req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+): void => {
+  const indexPath = path.join(frontendDist, "index.html");
+
+  try {
+    const configScript = `<script>window.__TN_POSTA_CONFIG__=${JSON.stringify({
+      clientId: process.env.CLIENT_ID ?? "35321",
+    })};</script>`;
+    const html = fs
+      .readFileSync(indexPath, "utf8")
+      .replace("<head>", `<head>${configScript}`);
+
+    res.type("html").send(html);
+  } catch (error) {
+    next(error);
+  }
+};
+
 app.use(
   morgan(":method :url :status :res[content-length] - :response-time ms")
 );
@@ -37,27 +58,15 @@ app.use(beforeCheckClientMiddleware);
 app.use(AppRoutes);
 
 if (fs.existsSync(frontendDist)) {
-  app.use(express.static(frontendDist));
+  app.use(express.static(frontendDist, { index: false }));
 
+  app.get("/", serveFrontendIndex);
   app.get("*", (req, res, next) => {
     if (req.method !== "GET") {
       return next();
     }
 
-    const indexPath = path.join(frontendDist, "index.html");
-
-    try {
-      const configScript = `<script>window.__TN_POSTA_CONFIG__=${JSON.stringify({
-        clientId: process.env.CLIENT_ID ?? "",
-      })};</script>`;
-      const html = fs
-        .readFileSync(indexPath, "utf8")
-        .replace("</head>", `${configScript}</head>`);
-
-      res.type("html").send(html);
-    } catch (error) {
-      return next(error);
-    }
+    return serveFrontendIndex(req, res, next);
   });
 }
 
