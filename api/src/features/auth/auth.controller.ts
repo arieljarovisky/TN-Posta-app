@@ -95,7 +95,7 @@ class AuthenticationController {
   }
 
   async debug(
-    _req: Request,
+    req: Request,
     res: Response,
     next: NextFunction
   ): Promise<Response | void> {
@@ -107,7 +107,19 @@ class AuthenticationController {
 
       if (!process.env.APP_PUBLIC_URL) {
         warnings.push(
-          "Falta APP_PUBLIC_URL en Railway. Configurala como https://tn-posta-app-production.up.railway.app"
+          "Falta APP_PUBLIC_URL. Ej: https://tn-posta-app-production.up.railway.app"
+        );
+      }
+
+      if (process.env.STORE_SLUG === "lupo") {
+        warnings.push(
+          "STORE_SLUG=lupo parece incorrecto. La tienda usa lupo24.mitiendanube.com — cambia a STORE_SLUG=lupo24"
+        );
+      }
+
+      if (!process.env.STORE_SLUG) {
+        warnings.push(
+          "Falta STORE_SLUG=lupo24 para links del admin de la tienda Lupo."
         );
       }
 
@@ -153,9 +165,12 @@ class AuthenticationController {
         },
         installUrl: getOAuthInstallUrl(),
         callbackUrl,
-        partnerPortalRedirectUrl: callbackUrl.startsWith("http")
-          ? callbackUrl
-          : "https://tn-posta-app-production.up.railway.app/auth/install",
+        partnerPortal: {
+          appUrl: process.env.APP_PUBLIC_URL ?? `${req.protocol}://${req.get("host")}`,
+          redirectUrl: callbackUrl.startsWith("http")
+            ? callbackUrl
+            : `https://tn-posta-app-production.up.railway.app/auth/install`,
+        },
         storeAdminAppUrl: getStoreAdminAppUrl() ?? null,
         storeAppsUrl: getStoreAppsUrl() ?? null,
         warnings,

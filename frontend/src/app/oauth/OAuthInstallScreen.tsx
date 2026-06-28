@@ -21,86 +21,44 @@ const OAuthInstallScreen = ({
   const appsUrl = getStoreAppsUrl();
   const oauthUrl = getOAuthInstallUrl();
   const callbackUrl = `${window.location.origin}/auth/install`;
+  const appUrl = window.location.origin;
 
   const titles: Record<OAuthInstallScreenProps["variant"], string> = {
     missing_code: "Falta autorizacion de Tiendanube",
     error: "Error al conectar la tienda",
     success: "Tienda conectada correctamente",
-    standalone: "TN Posta",
-  };
-
-  const descriptions: Record<OAuthInstallScreenProps["variant"], string> = {
-    missing_code:
-      "Tiendanube no envio el codigo OAuth. Si al autorizar te mando al dashboard de la tienda, la app ya esta instalada pero el servidor perdio las credenciales. Usa el boton azul (URL oficial de OAuth) o desinstala TN Posta y volve a instalar.",
-    error:
-      errorMessage ??
-      "No se pudo completar la instalacion. Intenta autorizar la app nuevamente.",
-    success:
-      "La tienda quedo autorizada. Abri TN Posta desde el administrador de tu tienda para gestionar envios.",
-    standalone:
-      "Esta app funciona dentro del administrador de Tiendanube. Autoriza la tienda o abrila desde Apps en tu panel.",
+    standalone: "TN Posta — Instalar app",
   };
 
   return (
     <Box
-      height="100vh"
+      minHeight="100vh"
       display="flex"
       justifyContent="center"
-      alignItems="center"
+      alignItems="flex-start"
       padding="4"
+      paddingTop="6"
     >
       <Box
         display="flex"
         flexDirection="column"
         gap="4"
-        maxWidth="520px"
+        maxWidth="560px"
         width="100%"
       >
         <Title as="h3">{titles[variant]}</Title>
 
-        <Alert
-          appearance={
-            variant === "success"
-              ? "success"
-              : variant === "standalone"
-                ? "neutral"
-                : "warning"
-          }
-          title={variant === "success" ? "Listo" : "Que hacer ahora"}
-        >
-          <Text>{descriptions[variant]}</Text>
-        </Alert>
-
-        {variant !== "success" && (
-          <Box display="flex" flexDirection="column" gap="2">
-            <Button appearance="primary" onClick={openOAuthInstallUrl}>
-              Autorizar / Reconectar tienda
+        {variant === "success" ? (
+          <>
+            <Alert appearance="success" title="Listo">
+              <Text>
+                La tienda quedo autorizada. Abri TN Posta desde Apps en tu
+                administrador de Tiendanube.
+              </Text>
+            </Alert>
+            <Button as="a" appearance="primary" href={adminUrl}>
+              Abrir TN Posta en mi tienda
             </Button>
-            <Text fontSize="caption" color="neutral-textLow">
-              Te llevara a Tiendanube para generar un nuevo codigo. Al terminar
-              volveras aca con la tienda conectada.
-            </Text>
-          </Box>
-        )}
-
-        <Box display="flex" flexDirection="column" gap="2">
-          <Button
-            as="a"
-            appearance={variant === "success" ? "primary" : "neutral"}
-            href={adminUrl}
-          >
-            {variant === "success"
-              ? "Abrir TN Posta en mi tienda"
-              : "Abrir TN Posta en el admin"}
-          </Button>
-
-          {variant !== "success" && (
-            <Button as="a" appearance="neutral" href={appsUrl}>
-              Ir a Apps para desinstalar y reinstalar
-            </Button>
-          )}
-
-          {variant === "success" && (
             <Button
               appearance="neutral"
               onClick={() => {
@@ -110,32 +68,92 @@ const OAuthInstallScreen = ({
             >
               Continuar aqui
             </Button>
-          )}
-        </Box>
+          </>
+        ) : (
+          <>
+            <Alert appearance="warning" title="La app no esta instalada">
+              <Text>
+                {variant === "missing_code"
+                  ? "Tiendanube no devolvio el codigo OAuth. Si ves una pagina en blanco en lupo24.../authorize, casi siempre es porque las URLs del Partner Portal no estan bien configuradas."
+                  : (errorMessage ??
+                    "No se pudo completar la instalacion.")}
+              </Text>
+            </Alert>
 
-        {(variant === "missing_code" || variant === "error") && (
-          <Box
-            padding="3"
-            backgroundColor="neutral-surface"
-            borderRadius="2"
-            display="flex"
-            flexDirection="column"
-            gap="2"
-          >
-            <Text fontWeight="medium" fontSize="caption">
-              Configuracion en Partner Portal:
-            </Text>
-            <Text fontSize="caption" color="neutral-textLow">
-              URL de redirect: <strong>{callbackUrl}</strong>
-            </Text>
-            <Text fontSize="caption" color="neutral-textLow">
-              URL de autorizacion: <strong>{oauthUrl}</strong>
-            </Text>
-            <Text fontSize="caption" color="neutral-textLow">
-              Si el boton te manda al dashboard: Apps → TN Posta → Desinstalar,
-              luego volve a usar Autorizar.
-            </Text>
-          </Box>
+            <Box display="flex" flexDirection="column" gap="2">
+              <Text fontWeight="medium">Paso 1 — Partner Portal (obligatorio)</Text>
+              <Text fontSize="caption" color="neutral-textLow">
+                En partners.tiendanube.com → App TN Posta → Datos basicos →
+                URLs, configura exactamente:
+              </Text>
+              <Box
+                padding="3"
+                backgroundColor="neutral-surface"
+                borderRadius="2"
+                display="flex"
+                flexDirection="column"
+                gap="1"
+              >
+                <Text fontSize="caption">
+                  <strong>URL de la aplicacion:</strong> {appUrl}
+                </Text>
+                <Text fontSize="caption">
+                  <strong>URL redirect post-instalacion:</strong> {callbackUrl}
+                </Text>
+              </Box>
+              <Text fontSize="caption" color="neutral-textLow">
+                No uses la URL default del portal de partners. Debe ser tu
+                dominio Railway con /auth/install.
+              </Text>
+            </Box>
+
+            <Box display="flex" flexDirection="column" gap="2">
+              <Text fontWeight="medium">Paso 2 — Instalar desde Tiendanube</Text>
+              <Text fontSize="caption" color="neutral-textLow">
+                Con las URLs guardadas, abri el link oficial de instalacion
+                (logueado en Lupo24):
+              </Text>
+              <Button appearance="primary" onClick={openOAuthInstallUrl}>
+                Instalar / Autorizar con Tiendanube
+              </Button>
+              <Text fontSize="caption" color="neutral-textLow">
+                Deberias ver pantalla de permisos → luego volver aca con
+                instalacion OK. Si ves pagina en blanco, revisa el Paso 1.
+              </Text>
+            </Box>
+
+            <Box display="flex" flexDirection="column" gap="2">
+              <Text fontWeight="medium">Alternativa — desde el admin Lupo24</Text>
+              <Button as="a" appearance="neutral" href={appsUrl}>
+                Ir a Apps en lupo24.mitiendanube.com
+              </Button>
+              <Text fontSize="caption" color="neutral-textLow">
+                Busca TN Posta → Instalar. Si no aparece, la app esta en
+                desarrollo: usa el boton azul de arriba o activa Modo
+                Desarrollador en la tienda.
+              </Text>
+            </Box>
+
+            <Box
+              padding="3"
+              backgroundColor="neutral-surface"
+              borderRadius="2"
+              display="flex"
+              flexDirection="column"
+              gap="1"
+            >
+              <Text fontSize="caption" color="neutral-textLow">
+                Link OAuth: <strong>{oauthUrl}</strong>
+              </Text>
+              <Text fontSize="caption" color="neutral-textLow">
+                Railway: agrega{" "}
+                <strong>STORE_SLUG=lupo24</strong> y{" "}
+                <strong>
+                  APP_PUBLIC_URL=https://tn-posta-app-production.up.railway.app
+                </strong>
+              </Text>
+            </Box>
+          </>
         )}
       </Box>
     </Box>

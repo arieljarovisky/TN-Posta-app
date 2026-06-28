@@ -78,28 +78,28 @@ export const OAUTH_INSTALL_URL = getOAuthInstallUrl();
 
 export const TIENDANUBE_ADMIN_URL = getTiendanubeAdminUrl();
 
-/** Inicia OAuth via backend para usar siempre la URL correcta. */
+/** Inicia OAuth con la URL oficial (www.tiendanube.com/apps/...). */
 export const openOAuthInstallUrl = (): void => {
-  const reconnectPath = "/auth/reconnect";
+  const url = getOAuthInstallUrl();
 
   if (isTiendanubeEmbedded()) {
     try {
       if (window.top) {
-        window.top.location.assign(reconnectPath);
+        window.top.location.assign(url);
         return;
       }
     } catch {
       // iframe cross-origin
     }
 
-    const popup = window.open(reconnectPath, "_blank", "noopener,noreferrer");
+    const popup = window.open(url, "_blank", "noopener,noreferrer");
 
     if (!popup) {
-      window.location.assign(reconnectPath);
+      window.location.assign(url);
     }
 
     return;
   }
 
-  window.location.assign(reconnectPath);
+  window.location.assign(url);
 };
