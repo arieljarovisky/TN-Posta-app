@@ -47,25 +47,27 @@ const resolveLanguageKeys = (
   store: TiendanubeStore,
   existingPage?: TiendanubePage
 ): string[] => {
-  const fromPage = existingPage?.name ? Object.keys(existingPage.name) : [];
+  const keys = new Set<string>();
 
-  if (fromPage.length) {
-    return fromPage;
+  for (const field of [
+    existingPage?.name,
+    existingPage?.handle,
+    existingPage?.content,
+  ]) {
+    Object.keys(field ?? {}).forEach((language) => keys.add(language));
   }
 
   if (store.main_language?.trim()) {
-    return [store.main_language.trim()];
+    keys.add(store.main_language.trim());
   }
 
-  if (store.languages?.length) {
-    return store.languages.filter(Boolean);
+  store.languages?.filter(Boolean).forEach((language) => keys.add(language));
+
+  if (keys.size === 0) {
+    keys.add(store.country === "AR" ? "es_AR" : "es");
   }
 
-  if (store.country === "AR") {
-    return ["es"];
-  }
-
-  return ["es"];
+  return [...keys];
 };
 
 const buildPagePayload = (
@@ -92,43 +94,6 @@ const buildPagePayload = (
       i18n,
     },
   };
-};
-
-const buildLegacyUpdatePayload = (
-  languageKeys: string[],
-  title: string,
-  content: string
-) => {
-  if (languageKeys.length === 1) {
-    return {
-      title,
-      content,
-      published: true,
-    };
-  }
-
-  const titleByLanguage: Record<string, string> = {};
-  const contentByLanguage: Record<string, string> = {};
-
-  for (const language of languageKeys) {
-    titleByLanguage[language] = title;
-    contentByLanguage[language] = content;
-  }
-
-  return {
-    title: titleByLanguage,
-    content: contentByLanguage,
-    published: true,
-  };
-};
-
-const isRecoverablePagePayloadError = (error: unknown): boolean => {
-  if (!(error instanceof HttpErrorException)) {
-    return false;
-  }
-
-  const status = Number(error.statusCode);
-  return status >= 400 && status < 500;
 };
 
 const normalizeStoreBaseUrl = (store: TiendanubeStore): string => {
@@ -280,27 +245,10 @@ class TrackingPageSyncService {
     content: string,
     seoHandle: string
   ): Promise<void> {
-    const payloads = [
-      buildLegacyUpdatePayload(languageKeys, title, content),
-      buildPagePayload(languageKeys, title, content, seoHandle),
-    ];
-
-    let lastError: unknown;
-
-    for (const payload of payloads) {
-      try {
-        await tiendanubeContentApiClient.put(`${storeId}/pages/${pageId}`, payload);
-        return;
-      } catch (error) {
-        lastError = error;
-
-        if (!isRecoverablePagePayloadError(error)) {
-          throw error;
-        }
-      }
-    }
-
-    throw lastError;
+    await tiendanubeContentApiClient.put(
+      `${storeId}/pages/${pageId}`,
+      buildPagePayload(languageKeys, title, content, seoHandle)
+    );
   }
 
   private async createPage(
@@ -310,29 +258,10 @@ class TrackingPageSyncService {
     content: string,
     seoHandle: string
   ): Promise<TiendanubePage> {
-    const payloads = [
-      buildPagePayload(languageKeys, title, content, seoHandle),
-      buildLegacyUpdatePayload(languageKeys, title, content),
-    ];
-
-    let lastError: unknown;
-
-    for (const payload of payloads) {
-      try {
-        return (await tiendanubeContentApiClient.post(
-          `${storeId}/pages`,
-          payload
-        )) as TiendanubePage;
-      } catch (error) {
-        lastError = error;
-
-        if (!isRecoverablePagePayloadError(error)) {
-          throw error;
-        }
-      }
-    }
-
-    throw lastError;
+    return (await tiendanubeContentApiClient.post(
+      `${storeId}/pages`,
+      buildPagePayload(languageKeys, title, content, seoHandle)
+    )) as TiendanubePage;
   }
 
   async syncTrackingPage(
@@ -374,6 +303,15 @@ class TrackingPageSyncService {
       const languageKeys = resolveLanguageKeys(store, existing);
       let pageId = existing?.id;
       let scriptMessage: string | undefined;
+
+      logInfo("tracking-page-sync", "Preparando sincronizacion de pagina", {
+        storeId,
+        pageId,
+        handle,
+        languageKeys,
+        titleLength: title.length,
+        contentLength: content.length,
+      });
 
       if (pageId) {
         await this.updatePage(storeId, pageId, languageKeys, title, content, handle);
