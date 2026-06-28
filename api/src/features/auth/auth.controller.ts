@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import fs from "fs";
 
-import { getExpectedCallbackUrl, getOAuthInstallUrl } from "@config/oauth-urls";
+import { getExpectedCallbackUrl, getOAuthInstallUrl, getStoreAdminAppUrl, getStoreAppsUrl } from "@config/oauth-urls";
 import { getDatabasePath } from "@config/database";
 import { InstallAppService, AuthService } from "@features/auth";
 import { userRepository } from "@repository";
@@ -58,6 +58,20 @@ class AuthenticationController {
         )}`
       );
     }
+  }
+
+  async reconnect(
+    _req: Request,
+    res: Response,
+    _next: NextFunction
+  ): Promise<Response | void> {
+    const oauthUrl = getOAuthInstallUrl();
+
+    logInfo("auth/reconnect", "Redirigiendo a OAuth de Tiendanube", {
+      oauthUrl,
+    });
+
+    return res.redirect(oauthUrl);
   }
 
   async status(
@@ -142,6 +156,8 @@ class AuthenticationController {
         partnerPortalRedirectUrl: callbackUrl.startsWith("http")
           ? callbackUrl
           : "https://tn-posta-app-production.up.railway.app/auth/install",
+        storeAdminAppUrl: getStoreAdminAppUrl() ?? null,
+        storeAppsUrl: getStoreAppsUrl() ?? null,
         warnings,
       });
     } catch (e) {

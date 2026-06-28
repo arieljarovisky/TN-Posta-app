@@ -15,6 +15,7 @@ const routes = Router();
 const apiRoutes = Router();
 
 routes.get("/auth/install", AuthenticationController.install);
+routes.get("/auth/reconnect", AuthenticationController.reconnect);
 routes.get("/auth/status", AuthenticationController.status);
 routes.get("/auth/debug", AuthenticationController.debug);
 

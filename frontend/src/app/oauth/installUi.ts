@@ -35,7 +35,7 @@ export const isTiendanubeEmbedded = (): boolean => {
   );
 };
 
-/** URL del admin de la tienda (no usar www.tiendanube.com/admin/... — da 404). */
+/** Abrir la app embebida en el admin de la tienda (no es el flujo OAuth). */
 export const getTiendanubeAdminUrl = (): string => {
   const configured = getRuntimeConfig().storeAdminUrl?.trim();
 
@@ -53,44 +53,53 @@ export const getTiendanubeAdminUrl = (): string => {
   return "https://www.tiendanube.com/login";
 };
 
-export const getOAuthInstallUrl = (): string => {
-  const appId = getClientId();
+/** URL para desinstalar la app desde el admin de la tienda. */
+export const getStoreAppsUrl = (): string => {
   const slug = getStoreSlug();
-  const state = "install";
 
   if (slug) {
-    return `https://${slug}.mitiendanube.com/admin/apps/${appId}/authorize?state=${state}`;
+    return `https://${slug}.mitiendanube.com/admin/v2/apps/`;
   }
 
-  return `https://www.tiendanube.com/apps/${appId}/authorize?state=${state}`;
+  return "https://www.tiendanube.com/login";
+};
+
+/**
+ * URL oficial de OAuth (instalar / reinstalar).
+ * La URL /admin/apps/.../authorize solo abre la app si ya esta instalada.
+ */
+export const getOAuthInstallUrl = (): string => {
+  const appId = getClientId();
+
+  return `https://www.tiendanube.com/apps/${appId}/authorize?state=install`;
 };
 
 export const OAUTH_INSTALL_URL = getOAuthInstallUrl();
 
 export const TIENDANUBE_ADMIN_URL = getTiendanubeAdminUrl();
 
-/** Abre el flujo OAuth fuera del iframe del admin (los links normales no funcionan ahí). */
+/** Inicia OAuth via backend para usar siempre la URL correcta. */
 export const openOAuthInstallUrl = (): void => {
-  const url = getOAuthInstallUrl();
+  const reconnectPath = "/auth/reconnect";
 
   if (isTiendanubeEmbedded()) {
     try {
       if (window.top) {
-        window.top.location.assign(url);
+        window.top.location.assign(reconnectPath);
         return;
       }
     } catch {
       // iframe cross-origin
     }
 
-    const popup = window.open(url, "_blank", "noopener,noreferrer");
+    const popup = window.open(reconnectPath, "_blank", "noopener,noreferrer");
 
     if (!popup) {
-      window.location.assign(url);
+      window.location.assign(reconnectPath);
     }
 
     return;
   }
 
-  window.location.assign(url);
+  window.location.assign(reconnectPath);
 };

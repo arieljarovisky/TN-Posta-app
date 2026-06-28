@@ -2,6 +2,7 @@ import { Alert, Box, Button, Text, Title } from "@nimbus-ds/components";
 
 import {
   getOAuthInstallUrl,
+  getStoreAppsUrl,
   getTiendanubeAdminUrl,
   openOAuthInstallUrl,
 } from "./installUi";
@@ -17,7 +18,9 @@ const OAuthInstallScreen = ({
   errorMessage,
 }: OAuthInstallScreenProps) => {
   const adminUrl = getTiendanubeAdminUrl();
+  const appsUrl = getStoreAppsUrl();
   const oauthUrl = getOAuthInstallUrl();
+  const callbackUrl = `${window.location.origin}/auth/install`;
 
   const titles: Record<OAuthInstallScreenProps["variant"], string> = {
     missing_code: "Falta autorizacion de Tiendanube",
@@ -28,7 +31,7 @@ const OAuthInstallScreen = ({
 
   const descriptions: Record<OAuthInstallScreenProps["variant"], string> = {
     missing_code:
-      "Tiendanube no envio el codigo de autorizacion. Suele pasar si la URL de redirect en el Partner Portal no coincide con /auth/install, o si abriste el enlace sin completar OAuth.",
+      "Tiendanube no envio el codigo OAuth. Si al autorizar te mando al dashboard de la tienda, la app ya esta instalada pero el servidor perdio las credenciales. Usa el boton azul (URL oficial de OAuth) o desinstala TN Posta y volve a instalar.",
     error:
       errorMessage ??
       "No se pudo completar la instalacion. Intenta autorizar la app nuevamente.",
@@ -74,8 +77,8 @@ const OAuthInstallScreen = ({
               Autorizar / Reconectar tienda
             </Button>
             <Text fontSize="caption" color="neutral-textLow">
-              Te llevara a Tiendanube para aceptar permisos. Al terminar volveras
-              aca automaticamente.
+              Te llevara a Tiendanube para generar un nuevo codigo. Al terminar
+              volveras aca con la tienda conectada.
             </Text>
           </Box>
         )}
@@ -88,8 +91,15 @@ const OAuthInstallScreen = ({
           >
             {variant === "success"
               ? "Abrir TN Posta en mi tienda"
-              : "Ir al administrador de mi tienda"}
+              : "Abrir TN Posta en el admin"}
           </Button>
+
+          {variant !== "success" && (
+            <Button as="a" appearance="neutral" href={appsUrl}>
+              Ir a Apps para desinstalar y reinstalar
+            </Button>
+          )}
+
           {variant === "success" && (
             <Button
               appearance="neutral"
@@ -113,14 +123,17 @@ const OAuthInstallScreen = ({
             gap="2"
           >
             <Text fontWeight="medium" fontSize="caption">
-              Verifica en el Partner Portal de Tiendanube:
+              Configuracion en Partner Portal:
             </Text>
             <Text fontSize="caption" color="neutral-textLow">
-              URL de redirect:{" "}
-              <strong>{window.location.origin}/auth/install</strong>
+              URL de redirect: <strong>{callbackUrl}</strong>
             </Text>
             <Text fontSize="caption" color="neutral-textLow">
               URL de autorizacion: <strong>{oauthUrl}</strong>
+            </Text>
+            <Text fontSize="caption" color="neutral-textLow">
+              Si el boton te manda al dashboard: Apps → TN Posta → Desinstalar,
+              luego volve a usar Autorizar.
             </Text>
           </Box>
         )}

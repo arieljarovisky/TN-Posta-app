@@ -6,16 +6,14 @@ export const getStoreSlug = (): string | undefined => {
   return slug || undefined;
 };
 
+/**
+ * URL oficial de OAuth. Funciona para instalar y reinstalar.
+ * NO usar /admin/apps/.../authorize: si la app ya esta instalada, abre el dashboard sin codigo.
+ */
 export const getOAuthInstallUrl = (): string => {
   const appId = getClientId();
-  const slug = getStoreSlug();
-  const state = "install";
 
-  if (slug) {
-    return `https://${slug}.mitiendanube.com/admin/apps/${appId}/authorize?state=${state}`;
-  }
-
-  return `https://www.tiendanube.com/apps/${appId}/authorize?state=${state}`;
+  return `https://www.tiendanube.com/apps/${appId}/authorize?state=install`;
 };
 
 export const getExpectedCallbackUrl = (): string => {
@@ -26,4 +24,25 @@ export const getExpectedCallbackUrl = (): string => {
   }
 
   return "/auth/install";
+};
+
+export const getStoreAdminAppUrl = (): string | undefined => {
+  const slug = getStoreSlug();
+  const appId = getClientId();
+
+  if (!slug) {
+    return undefined;
+  }
+
+  return `https://${slug}.mitiendanube.com/admin/v2/apps/${appId}`;
+};
+
+export const getStoreAppsUrl = (): string | undefined => {
+  const slug = getStoreSlug();
+
+  if (!slug) {
+    return undefined;
+  }
+
+  return `https://${slug}.mitiendanube.com/admin/v2/apps/`;
 };
