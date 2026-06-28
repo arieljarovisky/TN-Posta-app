@@ -53,7 +53,7 @@ const App = () => {
     );
   }
 
-  if (installStatus.installed && !isTiendanubeEmbedded()) {
+  if (installStatus.installed) {
     return <OAuthInstallScreen variant="success" />;
   }
 

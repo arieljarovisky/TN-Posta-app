@@ -111,15 +111,9 @@ class AuthenticationController {
         );
       }
 
-      if (process.env.STORE_SLUG === "lupo") {
-        warnings.push(
-          "STORE_SLUG=lupo parece incorrecto. La tienda usa lupo24.mitiendanube.com — cambia a STORE_SLUG=lupo24"
-        );
-      }
-
       if (!process.env.STORE_SLUG) {
         warnings.push(
-          "Falta STORE_SLUG=lupo24 para links del admin de la tienda Lupo."
+          "Falta STORE_SLUG (ej. lupo15 para lupo15.mitiendanube.com)."
         );
       }
 

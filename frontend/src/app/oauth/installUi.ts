@@ -21,19 +21,8 @@ export const getStoreSlug = (): string | undefined => {
   return slug || undefined;
 };
 
-export const isTiendanubeEmbedded = (): boolean => {
-  if (window.self !== window.top) {
-    return true;
-  }
-
-  const referrer = document.referrer;
-
-  return (
-    referrer.includes("tiendanube.com") ||
-    referrer.includes("mitiendanube.com") ||
-    referrer.includes("nuvemshop.com.br")
-  );
-};
+/** Solo true dentro del iframe del admin de Tiendanube (no usar referrer: falla post-OAuth). */
+export const isTiendanubeEmbedded = (): boolean => window.self !== window.top;
 
 /** Abrir la app embebida en el admin de la tienda (no es el flujo OAuth). */
 export const getTiendanubeAdminUrl = (): string => {

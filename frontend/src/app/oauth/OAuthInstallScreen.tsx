@@ -3,6 +3,7 @@ import { Alert, Box, Button, Text, Title } from "@nimbus-ds/components";
 import {
   getOAuthInstallUrl,
   getStoreAppsUrl,
+  getStoreSlug,
   getTiendanubeAdminUrl,
   openOAuthInstallUrl,
 } from "./installUi";
@@ -20,6 +21,9 @@ const OAuthInstallScreen = ({
   const adminUrl = getTiendanubeAdminUrl();
   const appsUrl = getStoreAppsUrl();
   const oauthUrl = getOAuthInstallUrl();
+  const storeSlug = getStoreSlug();
+  const storeLabel = storeSlug ?? "tu tienda";
+  const storeHost = storeSlug ? `${storeSlug}.mitiendanube.com` : "tu-tienda.mitiendanube.com";
   const callbackUrl = `${window.location.origin}/auth/install`;
   const appUrl = window.location.origin;
 
@@ -50,10 +54,10 @@ const OAuthInstallScreen = ({
 
         {variant === "success" ? (
           <>
-            <Alert appearance="success" title="Listo">
+            <Alert appearance="success" title="Instalacion completada">
               <Text>
-                La tienda quedo autorizada. Abri TN Posta desde Apps en tu
-                administrador de Tiendanube.
+                La tienda quedo autorizada y conectada. Abri TN Posta desde Apps
+                en tu administrador de Tiendanube para empezar a usarla.
               </Text>
             </Alert>
             <Button as="a" appearance="primary" href={adminUrl}>
@@ -63,10 +67,10 @@ const OAuthInstallScreen = ({
               appearance="neutral"
               onClick={() => {
                 clearInstallParamsFromUrl();
-                window.location.reload();
+                window.location.href = adminUrl;
               }}
             >
-              Continuar aqui
+              Ir al admin ahora
             </Button>
           </>
         ) : (
@@ -74,7 +78,7 @@ const OAuthInstallScreen = ({
             <Alert appearance="warning" title="La app no esta instalada">
               <Text>
                 {variant === "missing_code"
-                  ? "Tiendanube no devolvio el codigo OAuth. Si ves una pagina en blanco en lupo24.../authorize, casi siempre es porque las URLs del Partner Portal no estan bien configuradas."
+                  ? `Tiendanube no devolvio el codigo OAuth. Si ves pagina en blanco en ${storeHost}/authorize, revisa las URLs del Partner Portal.`
                   : (errorMessage ??
                     "No se pudo completar la instalacion.")}
               </Text>
@@ -111,7 +115,7 @@ const OAuthInstallScreen = ({
               <Text fontWeight="medium">Paso 2 — Instalar desde Tiendanube</Text>
               <Text fontSize="caption" color="neutral-textLow">
                 Con las URLs guardadas, abri el link oficial de instalacion
-                (logueado en Lupo24):
+                (logueado en {storeLabel}):
               </Text>
               <Button appearance="primary" onClick={openOAuthInstallUrl}>
                 Instalar / Autorizar con Tiendanube
@@ -123,9 +127,11 @@ const OAuthInstallScreen = ({
             </Box>
 
             <Box display="flex" flexDirection="column" gap="2">
-              <Text fontWeight="medium">Alternativa — desde el admin Lupo24</Text>
+              <Text fontWeight="medium">
+                Alternativa — desde el admin {storeLabel}
+              </Text>
               <Button as="a" appearance="neutral" href={appsUrl}>
-                Ir a Apps en lupo24.mitiendanube.com
+                Ir a Apps en {storeHost}
               </Button>
               <Text fontSize="caption" color="neutral-textLow">
                 Busca TN Posta → Instalar. Si no aparece, la app esta en
@@ -146,12 +152,17 @@ const OAuthInstallScreen = ({
                 Link OAuth: <strong>{oauthUrl}</strong>
               </Text>
               <Text fontSize="caption" color="neutral-textLow">
-                Railway: agrega{" "}
-                <strong>STORE_SLUG=lupo24</strong> y{" "}
+                Railway: configura{" "}
+                <strong>STORE_SLUG={storeSlug ?? "lupo15"}</strong> y{" "}
                 <strong>
                   APP_PUBLIC_URL=https://tn-posta-app-production.up.railway.app
                 </strong>
               </Text>
+              {!storeSlug && (
+                <Text fontSize="caption" color="danger-text">
+                  STORE_SLUG no esta configurado. Para tu tienda usa lupo15.
+                </Text>
+              )}
             </Box>
           </>
         )}
