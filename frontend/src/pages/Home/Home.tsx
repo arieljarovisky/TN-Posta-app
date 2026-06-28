@@ -18,8 +18,9 @@ import {
 import { LocationIcon, TruckIcon } from "@nimbus-ds/icons";
 
 import { nexo } from "@/app";
-import { ReinstallStoreAlert, ShippingRatesEditor } from "@/components";
+import { ReinstallStoreAlert, ShippingRatesEditor, ZoneCoveragePanel } from "@/components";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
+import { useZoneCoverage } from "@/hooks/useZoneCoverage";
 import { ShippingRateRule } from "@/types/shipping";
 import {
   clearInstallParamsFromUrl,
@@ -44,6 +45,11 @@ const Home = () => {
     saveShippingConfig,
     reloadSettings,
   } = useStoreSettings();
+  const {
+    zones: zoneCoverage,
+    loading: zoneCoverageLoading,
+    error: zoneCoverageError,
+  } = useZoneCoverage();
   const [carrierNameInput, setCarrierNameInput] = useState("TN Posta");
   const [ratesInput, setRatesInput] = useState<ShippingRateRule[]>([]);
 
@@ -253,6 +259,8 @@ const Home = () => {
                     carrierName={carrierNameInput}
                     rates={ratesInput}
                     disabled={saving || loading}
+                    zoneCoverage={zoneCoverage}
+                    zoneCoverageLoading={zoneCoverageLoading}
                     onCarrierNameChange={setCarrierNameInput}
                     onRatesChange={setRatesInput}
                     onSave={handleSaveShippingConfig}
@@ -311,10 +319,19 @@ const Home = () => {
                 </Alert>
               )}
 
-              <Box paddingY="2">
-                <Title as="h6">{t("home.coverageTitle")}</Title>
-                <Text>{t("home.coverageBody")}</Text>
-              </Box>
+              <Card>
+                <Card.Header title={t("home.coverageTitle")} />
+                <Card.Body>
+                  <ZoneCoveragePanel
+                    zones={zoneCoverage}
+                    loading={zoneCoverageLoading}
+                    error={zoneCoverageError}
+                    highlightZones={ratesInput
+                      .filter((rate) => rate.active)
+                      .map((rate) => rate.zone)}
+                  />
+                </Card.Body>
+              </Card>
             </Box>
           </Layout.Section>
         </Layout>

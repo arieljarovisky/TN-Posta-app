@@ -15,11 +15,15 @@ import {
   ShippingRateRule,
   ShippingRateZone,
 } from "@/types/shipping";
+import { ZoneCoverageInfo } from "@/services/zones.api";
+import { ZoneLocalitiesPreview } from "@/components/ZoneCoveragePanel/ZoneCoveragePanel";
 
 type ShippingRatesEditorProps = {
   carrierName: string;
   rates: ShippingRateRule[];
   disabled?: boolean;
+  zoneCoverage?: ZoneCoverageInfo[];
+  zoneCoverageLoading?: boolean;
   onCarrierNameChange: (value: string) => void;
   onRatesChange: (rates: ShippingRateRule[]) => void;
   onSave: () => void;
@@ -38,10 +42,14 @@ const ShippingRatesEditor = ({
   carrierName,
   rates,
   disabled = false,
+  zoneCoverage = [],
+  zoneCoverageLoading = false,
   onCarrierNameChange,
   onRatesChange,
   onSave,
 }: ShippingRatesEditorProps) => {
+  const getCoverageForZone = (zone: ShippingRateZone) =>
+    zoneCoverage.find((entry) => entry.zone === zone);
   const updateRate = (id: string, patch: Partial<ShippingRateRule>) => {
     onRatesChange(
       rates.map((rate) => (rate.id === id ? { ...rate, ...patch } : rate))
@@ -169,6 +177,12 @@ const ShippingRatesEditor = ({
                   />
                 </Box>
               </Box>
+
+              <ZoneLocalitiesPreview
+                zone={rate.zone}
+                coverage={getCoverageForZone(rate.zone)}
+                loading={zoneCoverageLoading}
+              />
             </Box>
           ))
         )}

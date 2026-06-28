@@ -7,6 +7,7 @@ import { ProductController } from "@features/product";
 import { SettingsController } from "@features/settings";
 import { ShipmentController } from "@features/shipment";
 import { ShippingController } from "@features/shipping";
+import { ZoneController } from "@features/zone";
 import { WebhookController } from "@features/webhook";
 import { requireServiceEnabledMiddleware, requireStoreCredentialsMiddleware } from "@middlewares";
 
@@ -24,6 +25,12 @@ routes.post("/webhooks/customers/redact", WebhookController.customersRedact);
 routes.post(
   "/webhooks/customers/data_request",
   WebhookController.customersDataRequest
+);
+
+apiRoutes.get(
+  "/zones/coverage",
+  passport.authenticate("jwt", { session: false }),
+  ZoneController.getCoverage
 );
 
 apiRoutes.get(

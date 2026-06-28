@@ -39,8 +39,9 @@ const resources = {
         shipmentsCard: "Ver envios creados",
         shipmentsCardHelp:
           "Consulta envios ya creados y descarga las etiquetas en PDF.",
-        coverageTitle: "Cobertura",
-        coverageBody: "Capital Federal y Gran Buenos Aires unicamente.",
+        coverageTitle: "Cobertura por barrio",
+        coverageBody:
+          "Consulta los barrios y partidos incluidos en cada zona de envio.",
         reconnectTitle: "Tienda desconectada",
         reconnectBody:
           "Las credenciales OAuth se perdieron (suele pasar tras un redeploy). Reconecta la tienda para ver pedidos y crear envios.",
