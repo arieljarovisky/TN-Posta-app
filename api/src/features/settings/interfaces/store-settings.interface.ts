@@ -54,6 +54,7 @@ export interface StoreSettingsResponse {
   tracking_page_url?: string;
   tracking_page_public_url?: string | null;
   tracking_page_sync_message?: string;
+  tracking_page_sync_ok?: boolean;
   tracking_page_embed_script_url?: string;
   tracking_page_embed_html?: string;
   tracking_page_embed_script_html?: string;

@@ -1,4 +1,5 @@
 export * from "./tiendanube-api.client";
+export * from "./tiendanube-content-api.client";
 export * from "./tiendanube-auth.client";
 export * from "./database";
 export { default as AppRoutes } from "./routes";

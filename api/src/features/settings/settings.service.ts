@@ -61,6 +61,7 @@ class SettingsService {
     settings: StoreSettings;
     shipping_sync_message?: string;
     tracking_page_sync_message?: string;
+    tracking_page_sync_ok?: boolean;
   }> {
     const current = settingsRepository.getByStoreId(storeId);
     const normalizedRates = data.shipping_rates
@@ -139,6 +140,7 @@ class SettingsService {
 
     let shipping_sync_message: string | undefined;
     let tracking_page_sync_message: string | undefined;
+    let tracking_page_sync_ok: boolean | undefined;
 
     const hasCredentials = Boolean(userRepository.findOptional(storeId)?.access_token);
     const trackingPageChanged =
@@ -153,6 +155,7 @@ class SettingsService {
       });
 
       tracking_page_sync_message = syncResult.message;
+      tracking_page_sync_ok = syncResult.ok;
     }
 
     if (hasCredentials && (data.shipping_rates || data.carrier_name || data.enabled)) {
@@ -176,6 +179,7 @@ class SettingsService {
       settings: settingsRepository.getByStoreId(storeId),
       shipping_sync_message,
       tracking_page_sync_message,
+      tracking_page_sync_ok,
     };
   }
 

@@ -182,7 +182,11 @@ export const useStoreSettings = () => {
       setTrackingPageEmbedHtml(data.tracking_page_embed_html ?? "");
       setStorePublicUrl(data.store_public_url ?? null);
       setLoadError(null);
-      return { success: true, syncMessage: data.tracking_page_sync_message };
+      return {
+        success: true,
+        syncMessage: data.tracking_page_sync_message,
+        syncOk: data.tracking_page_sync_ok,
+      };
     } catch {
       return { success: false };
     } finally {

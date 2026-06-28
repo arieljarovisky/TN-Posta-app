@@ -1,13 +1,13 @@
 import { getAppPublicBaseUrl } from "@config/oauth-urls";
-import { tiendanubeApiClient } from "@config";
+import { tiendanubeContentApiClient } from "@config/tiendanube-content-api.client";
 import { buildEmbedFormHtmlSnippet } from "@features/public/embed-widget";
 import { PUBLIC_SHIPPING_PAGE_PATH } from "@config/public-pages";
 import {
-  DEFAULT_TRACKING_PAGE_HANDLE,
   getTrackingPageHandle,
   getTrackingStorefrontScriptId,
 } from "@features/storefront/tracking-page.constants";
 import { settingsRepository } from "@repository";
+import { HttpErrorException } from "@utils";
 import { logError, logInfo } from "@utils/logger";
 
 type TiendanubePage = {
@@ -57,18 +57,18 @@ const resolveLanguageKeys = (
   }
 
   if (store.country === "AR") {
-    return ["es_AR"];
+    return ["es"];
   }
 
   return ["es"];
 };
 
-const buildI18nPayload = (
+const buildCreatePayload = (
   languageKeys: string[],
   title: string,
   content: string,
   seoHandle: string
-): Record<string, Record<string, string>> => {
+) => {
   const i18n: Record<string, Record<string, string>> = {};
 
   for (const language of languageKeys) {
@@ -81,7 +81,42 @@ const buildI18nPayload = (
     };
   }
 
-  return i18n;
+  return {
+    page: {
+      publish: true,
+      i18n,
+    },
+  };
+};
+
+const buildUpdatePayload = (
+  languageKeys: string[],
+  title: string,
+  content: string,
+  seoHandle: string
+) => {
+  const name: Record<string, string> = {};
+  const pageContent: Record<string, string> = {};
+  const handle: Record<string, string> = {};
+  const seo_title: Record<string, string> = {};
+  const seo_description: Record<string, string> = {};
+
+  for (const language of languageKeys) {
+    name[language] = title;
+    pageContent[language] = content;
+    handle[language] = seoHandle;
+    seo_title[language] = title;
+    seo_description[language] = "Consulta el estado de tu envio con tu codigo TPA.";
+  }
+
+  return {
+    published: true,
+    name,
+    content: pageContent,
+    handle,
+    seo_title,
+    seo_description,
+  };
 };
 
 const normalizeStoreBaseUrl = (store: TiendanubeStore): string => {
@@ -94,13 +129,32 @@ const normalizeStoreBaseUrl = (store: TiendanubeStore): string => {
   return raw.replace(/\/$/, "");
 };
 
+const extractApiErrorMessage = (error: unknown): string => {
+  if (error instanceof HttpErrorException) {
+    return [error.description, error.message].filter(Boolean).join(" - ");
+  }
+
+  if (error instanceof Error && "description" in error) {
+    const description = String((error as { description?: string }).description ?? "");
+    if (description) {
+      return description;
+    }
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "";
+};
+
 class TrackingPageSyncService {
   private async getStore(storeId: number): Promise<TiendanubeStore> {
-    return (await tiendanubeApiClient.get(`${storeId}/store`)) as TiendanubeStore;
+    return (await tiendanubeContentApiClient.get(`${storeId}/store`)) as TiendanubeStore;
   }
 
   private async listPages(storeId: number): Promise<TiendanubePage[]> {
-    const response = (await tiendanubeApiClient.get(
+    const response = (await tiendanubeContentApiClient.get(
       `${storeId}/pages?per_page=200`
     )) as TiendanubePagesResponse | TiendanubePage[];
 
@@ -132,15 +186,13 @@ class TrackingPageSyncService {
 
     if (enabled) {
       try {
-        await tiendanubeApiClient.post(`${storeId}/scripts`, {
+        await tiendanubeContentApiClient.post(`${storeId}/scripts`, {
           script_id: scriptId,
           query_params: "{}",
         });
       } catch (error) {
         const status =
-          error instanceof Error && "statusCode" in error
-            ? Number((error as { statusCode?: number }).statusCode)
-            : undefined;
+          error instanceof HttpErrorException ? Number(error.statusCode) : undefined;
 
         if (status !== 409 && status !== 422) {
           throw error;
@@ -151,12 +203,10 @@ class TrackingPageSyncService {
     }
 
     try {
-      await tiendanubeApiClient.delete(`${storeId}/scripts/${scriptId}`);
+      await tiendanubeContentApiClient.delete(`${storeId}/scripts/${scriptId}`);
     } catch (error) {
       const status =
-        error instanceof Error && "statusCode" in error
-          ? Number((error as { statusCode?: number }).statusCode)
-          : undefined;
+        error instanceof HttpErrorException ? Number(error.statusCode) : undefined;
 
       if (status !== 404) {
         throw error;
@@ -188,43 +238,42 @@ class TrackingPageSyncService {
 
     try {
       const store = await this.getStore(storeId);
-      const existingById = options.existingPageId
-        ? ((await tiendanubeApiClient.get(
-            `${storeId}/pages/${options.existingPageId}`
-          )) as TiendanubePage)
-        : undefined;
+      let existing: TiendanubePage | undefined;
 
-      const existing =
-        existingById ??
-        (await this.findPageByHandle(storeId, handle));
+      if (options.existingPageId) {
+        try {
+          existing = (await tiendanubeContentApiClient.get(
+            `${storeId}/pages/${options.existingPageId}`
+          )) as TiendanubePage;
+        } catch {
+          existing = undefined;
+        }
+      }
+
+      existing ??= await this.findPageByHandle(storeId, handle);
 
       const languageKeys = resolveLanguageKeys(store, existing);
-
-      const i18n = buildI18nPayload(languageKeys, title, content, handle);
       let pageId = existing?.id;
       let scriptMessage: string | undefined;
 
       if (pageId) {
-        await tiendanubeApiClient.put(`${storeId}/pages/${pageId}`, {
-          page: {
-            publish: true,
-            i18n,
-          },
-        });
+        await tiendanubeContentApiClient.put(
+          `${storeId}/pages/${pageId}`,
+          buildUpdatePayload(languageKeys, title, content, handle)
+        );
 
         logInfo("tracking-page-sync", "Pagina de seguimiento actualizada", {
           storeId,
           pageId,
           handle,
           enabled: options.enabled,
+          languageKeys,
         });
       } else if (options.enabled) {
-        const created = (await tiendanubeApiClient.post(`${storeId}/pages`, {
-          page: {
-            publish: true,
-            i18n,
-          },
-        })) as TiendanubePage;
+        const created = (await tiendanubeContentApiClient.post(
+          `${storeId}/pages`,
+          buildCreatePayload(languageKeys, title, content, handle)
+        )) as TiendanubePage;
 
         pageId = created.id;
 
@@ -232,6 +281,7 @@ class TrackingPageSyncService {
           storeId,
           pageId,
           handle,
+          languageKeys,
         });
       } else {
         return {
@@ -280,12 +330,10 @@ class TrackingPageSyncService {
         handle,
       });
 
-      const description =
-        error instanceof Error && "description" in error
-          ? String((error as { description?: string }).description ?? "")
-          : "";
+      const apiMessage = extractApiErrorMessage(error);
+      const normalized = apiMessage.toLowerCase();
 
-      if (description.toLowerCase().includes("permission") || description.includes("403")) {
+      if (normalized.includes("permission") || normalized.includes("403")) {
         return {
           ok: false,
           message:
@@ -293,10 +341,18 @@ class TrackingPageSyncService {
         };
       }
 
+      if (normalized.includes("not found") && normalized.includes("page")) {
+        return {
+          ok: false,
+          message:
+            "No encontramos la pagina en Tiendanube. Guarda de nuevo para crearla automaticamente.",
+        };
+      }
+
       return {
         ok: false,
         message:
-          description ||
+          apiMessage ||
           "No pudimos publicar la pagina en Tiendanube. Verifica la conexion de la tienda e intenta de nuevo.",
       };
     }

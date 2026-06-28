@@ -233,7 +233,7 @@ const Home = () => {
     if (result.success) {
       addToast({
         id: crypto.randomUUID(),
-        type: "success",
+        type: result.syncOk === false ? "danger" : "success",
         text: result.syncMessage ?? t("home.trackingPageSaved"),
         duration: 8000,
       });

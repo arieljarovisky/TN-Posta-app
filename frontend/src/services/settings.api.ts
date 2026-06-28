@@ -25,6 +25,7 @@ export interface StoreSettingsResponse {
   tracking_page_embed_script_html?: string;
   tracking_page_public_url?: string | null;
   tracking_page_sync_message?: string;
+  tracking_page_sync_ok?: boolean;
   store_public_url?: string | null;
   shipping_sync_message?: string;
   updated_at: string;

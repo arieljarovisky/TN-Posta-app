@@ -20,7 +20,8 @@ const buildSettingsResponse = (
   req: Request,
   connected: boolean,
   shipping_sync_message?: string,
-  tracking_page_sync_message?: string
+  tracking_page_sync_message?: string,
+  tracking_page_sync_ok?: boolean
 ) => ({
   enabled: data.enabled,
   connected,
@@ -46,6 +47,7 @@ const buildSettingsResponse = (
   tracking_page_embed_html: getPublicEmbedHtml(req),
   tracking_page_embed_script_html: getPublicEmbedScriptHtml(req),
   tracking_page_sync_message,
+  tracking_page_sync_ok,
   store_public_url: getStorePublicUrl() ?? null,
   shipping_sync_message,
   updated_at: data.updated_at,
@@ -173,7 +175,7 @@ class SettingsController {
         );
       }
 
-      const { settings, shipping_sync_message, tracking_page_sync_message } =
+      const { settings, shipping_sync_message, tracking_page_sync_message, tracking_page_sync_ok } =
         await SettingsService.updateStoreSettings(+req.user.user_id, {
           enabled: payload.enabled,
           shipping_option_names: payload.shipping_option_names?.map((name) =>
@@ -199,7 +201,8 @@ class SettingsController {
           req,
           connected,
           shipping_sync_message,
-          tracking_page_sync_message
+          tracking_page_sync_message,
+          tracking_page_sync_ok
         )
       );
     } catch (error) {
