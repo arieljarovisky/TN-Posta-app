@@ -6,6 +6,7 @@ import {
   toShippingAddressInput,
 } from "@features/order/order.mapper";
 import {
+  buildPostaShippingMatchContext,
   extractShippingSelection,
   matchesAppShippingMethod,
 } from "@features/order/order-shipping";
@@ -98,10 +99,7 @@ class ShipmentService {
     const storeSettings = settingsRepository.getByStoreId(storeId);
     const shippingValidation = matchesAppShippingMethod(
       shippingSelection,
-      storeSettings.shipping_option_names,
-      (storeSettings.shipping_rates ?? [])
-        .filter((rate) => rate.active)
-        .map((rate) => rate.code)
+      buildPostaShippingMatchContext(storeSettings)
     );
 
     if (!shippingValidation.matches) {

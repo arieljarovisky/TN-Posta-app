@@ -10,31 +10,20 @@ export interface OrderShippingSelection {
   carrier_name?: string;
 }
 
+export interface PostaShippingMatchContext {
+  carrierId?: number;
+  carrierName?: string;
+  rateCodes?: string[];
+  rateNames?: string[];
+  rateIds?: string[];
+}
+
 const normalize = (value: string): string =>
   value
     .trim()
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
-
-const getConfiguredShippingNames = (
-  storeShippingNames?: string[]
-): string[] => {
-  if (storeShippingNames?.length) {
-    return storeShippingNames.map((name) => name.trim()).filter(Boolean);
-  }
-
-  const fromEnv = process.env.SHIPPING_OPTION_NAMES;
-
-  if (!fromEnv) {
-    return [];
-  }
-
-  return fromEnv
-    .split(",")
-    .map((name) => name.trim())
-    .filter(Boolean);
-};
 
 export const extractShippingSelection = (
   order: TiendanubeOrder
@@ -77,8 +66,7 @@ export const extractShippingSelection = (
 
 export const matchesAppShippingMethod = (
   selection: OrderShippingSelection | null,
-  storeShippingNames?: string[],
-  configuredRateCodes?: string[]
+  context: PostaShippingMatchContext = {}
 ): { matches: boolean; reason?: string } => {
   if (!selection) {
     return {
@@ -88,58 +76,61 @@ export const matchesAppShippingMethod = (
   }
 
   const appId = String(process.env.CLIENT_ID ?? "");
-  const configuredNames = getConfiguredShippingNames(storeShippingNames);
+  const carrierName = context.carrierName?.trim() || "TN Posta";
+  const normalizedCarrierName = normalize(carrierName);
+
+  const normalizedRateCodes = (context.rateCodes ?? [])
+    .map((code) => normalize(code))
+    .filter(Boolean);
+  const normalizedRateNames = (context.rateNames ?? [])
+    .map((name) => normalize(name))
+    .filter(Boolean);
+  const normalizedRateIds = (context.rateIds ?? [])
+    .map((id) => normalize(id))
+    .filter(Boolean);
 
   if (selection.carrier_app_id && appId && selection.carrier_app_id === appId) {
     return { matches: true };
   }
 
-  if (selection.carrier_id && appId && selection.carrier_id === appId) {
-    return { matches: true };
-  }
-
-  const normalizedCodes = (configuredRateCodes ?? [])
-    .map((code) => normalize(code))
-    .filter(Boolean);
-
   if (
-    selection.option_code &&
-    normalizedCodes.includes(normalize(selection.option_code))
+    context.carrierId &&
+    selection.carrier_id &&
+    String(selection.carrier_id) === String(context.carrierId)
   ) {
     return { matches: true };
   }
 
-  if (configuredNames.length === 0) {
-    return {
-      matches: false,
-      reason:
-        "Configura el nombre del envio en la app para identificar pedidos con tu metodo de envio.",
-    };
+  if (selection.carrier_name) {
+    const normalizedOrderCarrier = normalize(selection.carrier_name);
+
+    if (normalizedOrderCarrier === normalizedCarrierName) {
+      return { matches: true };
+    }
   }
 
-  const candidates = [
-    selection.option_name,
-    selection.option_code,
-    selection.option_reference,
-    selection.carrier_name,
-  ]
-    .filter(Boolean)
-    .map((value) => normalize(value!));
+  if (selection.option_code) {
+    const normalizedCode = normalize(selection.option_code);
 
-  const matches = candidates.some((candidate) =>
-    configuredNames.some((configuredName) => {
-      const normalizedName = normalize(configuredName);
+    if (normalizedRateCodes.includes(normalizedCode)) {
+      return { matches: true };
+    }
+  }
 
-      return (
-        candidate === normalizedName ||
-        candidate.includes(normalizedName) ||
-        normalizedName.includes(candidate)
-      );
-    })
-  );
+  if (selection.option_reference) {
+    const normalizedReference = normalize(selection.option_reference);
 
-  if (matches) {
-    return { matches: true };
+    if (normalizedRateIds.includes(normalizedReference)) {
+      return { matches: true };
+    }
+  }
+
+  if (selection.option_name) {
+    const normalizedOptionName = normalize(selection.option_name);
+
+    if (normalizedRateNames.includes(normalizedOptionName)) {
+      return { matches: true };
+    }
   }
 
   const selectedLabel =
@@ -150,10 +141,33 @@ export const matchesAppShippingMethod = (
 
   return {
     matches: false,
-    reason: `El cliente eligio "${selectedLabel}", que no coincide con tu metodo de envio configurado.`,
+    reason: `El cliente eligio "${selectedLabel}", que no es un envio de ${carrierName}.`,
   };
 };
 
 export const getFulfillmentOrders = (
   order: TiendanubeOrder
 ): TiendanubeFulfillmentOrder[] => order.fulfillment_orders ?? [];
+
+export const buildPostaShippingMatchContext = (storeSettings: {
+  carrier_id?: number;
+  carrier_name?: string;
+  shipping_rates?: Array<{
+    id: string;
+    code: string;
+    name: string;
+    active?: boolean;
+  }>;
+}): PostaShippingMatchContext => {
+  const activeRates = (storeSettings.shipping_rates ?? []).filter(
+    (rate) => rate.active !== false
+  );
+
+  return {
+    carrierId: storeSettings.carrier_id,
+    carrierName: storeSettings.carrier_name ?? "TN Posta",
+    rateCodes: activeRates.map((rate) => rate.code),
+    rateNames: activeRates.map((rate) => rate.name),
+    rateIds: activeRates.map((rate) => rate.id),
+  };
+};

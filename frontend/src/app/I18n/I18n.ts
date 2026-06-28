@@ -32,7 +32,7 @@ const resources = {
         manageTitle: "Gestionar envios",
         ordersCard: "Ver pedidos elegibles",
         ordersCardHelp:
-          "Solo pedidos donde el cliente eligio una tarifa de TN Posta en CABA o GBA.",
+          "Solo pedidos donde el cliente eligio TN Posta (carrier de la app) o una tarifa configurada aca, en CABA o GBA.",
         shippingRatesTitle: "Tarifas de envio",
         shippingRatesSaved: "Tarifas guardadas correctamente.",
         shippingRatesRequired: "Agrega al menos una tarifa con nombre y precio.",
@@ -48,7 +48,7 @@ const resources = {
       },
       orders: {
         title: "Pedidos",
-        empty: "No hay pedidos elegibles con tu metodo de envio en CABA o GBA.",
+        empty: "No hay pedidos con envio TN Posta en CABA o GBA.",
         shippingMethod: "Envio elegido",
         serviceDisabled: "Activa TN Posta desde la pantalla principal para ver pedidos.",
         reconnectRequired:
