@@ -2,9 +2,10 @@ import { NextFunction, Request, Response } from "express";
 import fs from "fs";
 import path from "path";
 
-import { StatusCode } from "@utils";
+import { getExpectedCallbackUrl, getOAuthInstallUrl } from "@config/oauth-urls";
 import { InstallAppService, AuthService } from "@features/auth";
 import { userRepository } from "@repository";
+import { StatusCode } from "@utils";
 import { logError, logInfo, maskCode } from "@utils/logger";
 
 class AuthenticationController {
@@ -106,9 +107,8 @@ class AuthenticationController {
           credentialsCount: summary.count,
           stores: summary.stores,
         },
-        installUrl:
-          "https://www.tiendanube.com/apps/35321/authorize?state=install",
-        callbackUrl: "/auth/install",
+        installUrl: getOAuthInstallUrl(),
+        callbackUrl: getExpectedCallbackUrl(),
       });
     } catch (e) {
       return next(e);

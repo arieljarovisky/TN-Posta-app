@@ -11,7 +11,7 @@ import {
   getInstallStatusFromUrl,
 } from "./oauth/oauthInstall";
 import { isTiendanubeEmbedded } from "./oauth/installUi";
-import InstallSuccessScreen from "./oauth/InstallSuccessScreen";
+import OAuthInstallScreen from "./oauth/OAuthInstallScreen";
 import StandaloneNoticeScreen from "./oauth/StandaloneNoticeScreen";
 import { getNexoStatus, nexo } from "./nexoBootstrap";
 import "./I18n";
@@ -33,18 +33,28 @@ const LoadingScreen = ({ message }: { message: string }) => (
 
 const App = () => {
   const [isInstalling] = useState(() => completeOAuthInstallIfNeeded());
-  const [showInstallSuccess] = useState(
-    () =>
-      !isTiendanubeEmbedded() && getInstallStatusFromUrl().installed
-  );
+  const [installStatus] = useState(() => getInstallStatusFromUrl());
   const nexoStatus = getNexoStatus();
 
   if (isInstalling) {
     return <LoadingScreen message="Instalando aplicacion..." />;
   }
 
-  if (showInstallSuccess) {
-    return <InstallSuccessScreen />;
+  if (installStatus.missingCode) {
+    return <OAuthInstallScreen variant="missing_code" />;
+  }
+
+  if (installStatus.error) {
+    return (
+      <OAuthInstallScreen
+        variant="error"
+        errorMessage={decodeURIComponent(installStatus.error)}
+      />
+    );
+  }
+
+  if (installStatus.installed && !isTiendanubeEmbedded()) {
+    return <OAuthInstallScreen variant="success" />;
   }
 
   if (nexoStatus === "pending") {

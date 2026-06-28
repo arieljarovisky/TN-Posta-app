@@ -4,6 +4,8 @@ declare global {
   interface Window {
     __TN_POSTA_CONFIG__?: {
       clientId?: string;
+      storeSlug?: string;
+      storeAdminUrl?: string;
     };
   }
 }

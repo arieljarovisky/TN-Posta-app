@@ -36,6 +36,8 @@ const serveFrontendIndex = (
   try {
     const configScript = `<script>window.__TN_POSTA_CONFIG__=${JSON.stringify({
       clientId: process.env.CLIENT_ID ?? "35321",
+      storeSlug: process.env.STORE_SLUG ?? null,
+      storeAdminUrl: process.env.STORE_ADMIN_URL ?? null,
     })};</script>`;
     const html = fs
       .readFileSync(indexPath, "utf8")
