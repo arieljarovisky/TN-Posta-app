@@ -349,9 +349,16 @@ class TrackingPageSyncService {
     enabled: boolean
   ): Promise<string | undefined> {
     const scriptId = getTrackingStorefrontScriptId();
+    const appOrigin = getAppPublicBaseUrl();
 
     if (!scriptId) {
-      return undefined;
+      if (!enabled) {
+        return undefined;
+      }
+
+      return appOrigin
+        ? `El boton Consultar envio funciona. Para el formulario en la pagina, registra en Partners Portal un script auto-install apuntando a ${appOrigin}/embed/storefront.js y define TRACKING_STOREFRONT_SCRIPT_ID en Railway.`
+        : "El boton Consultar envio funciona. Para el formulario en la pagina, registra el script de storefront en Partners Portal.";
     }
 
     if (enabled) {
@@ -384,6 +391,13 @@ class TrackingPageSyncService {
     }
 
     return "Script de seguimiento desactivado en la tienda.";
+  }
+
+  async syncStorefrontScript(
+    storeId: number,
+    enabled: boolean
+  ): Promise<string | undefined> {
+    return this.ensureStorefrontScript(storeId, enabled);
   }
 
   private async listPageHandles(

@@ -1,4 +1,4 @@
-/** CSS scoped bajo #tn-posta-envio para la pagina de seguimiento en Tiendanube. */
+/** CSS scoped bajo #tn-posta-envio (inyectado por JS en la tienda). */
 export const TN_POSTA_TRACKING_STYLES = `
 #tn-posta-envio{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111827;max-width:520px;margin:24px auto}
 #tn-posta-envio *{box-sizing:border-box}
@@ -34,3 +34,19 @@ export const buildTrackingWidgetMarkup = (actionUrl: string): string => `
   </form>
   <div class="tp-out"></div>
 </div>`;
+
+/**
+ * HTML que Tiendanube no rompe: solo div/p/a con estilos inline.
+ * Funciona sin JavaScript (redirige a /consulta-envio).
+ */
+export const buildTrackingPageFallbackContent = (
+  appOrigin: string,
+  pagePath = "/consulta-envio"
+): string => {
+  const href = appOrigin ? `${appOrigin}${pagePath}` : pagePath;
+
+  return `<div id="tn-posta-envio" style="max-width:520px;margin:24px auto;font-family:system-ui,-apple-system,sans-serif;color:#111827"><div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 28px rgba(17,24,39,.06);padding:28px 24px;text-align:center"><p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#374151">Ingres&aacute; tu c&oacute;digo de seguimiento TPA para conocer el estado de tu env&iacute;o.</p><a href="${href}" style="display:block;padding:16px;background:#111827;color:#fff;text-decoration:none;border-radius:10px;font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase">Consultar env&iacute;o</a><p style="margin:14px 0 0;font-size:13px;line-height:1.45;color:#6b7280">El c&oacute;digo figura en el mail de confirmaci&oacute;n de env&iacute;o.</p></div></div>`;
+};
+
+export const buildTrackingPageDisabledContent = (): string =>
+  `<div id="tn-posta-envio" style="max-width:520px;margin:24px auto;font-family:system-ui,-apple-system,sans-serif"><div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:28px 24px;text-align:center;font-size:15px;line-height:1.55;color:#6b7280">La consulta de seguimiento no est&aacute; disponible en este momento. Contact&aacute; a la tienda si necesit&aacute;s ayuda.</div></div>`;

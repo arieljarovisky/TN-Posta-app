@@ -1,4 +1,5 @@
 import {
+  buildTrackingPageFallbackContent,
   buildTrackingWidgetMarkup,
   TN_POSTA_TRACKING_STYLES,
 } from "@features/public/tracking-widget-styles";
@@ -7,20 +8,19 @@ export const PUBLIC_EMBED_SCRIPT_PATH = "/embed/envio.js";
 
 export const PUBLIC_ENVIO_API_PATH = "/api/public/envio";
 
-export { TN_POSTA_TRACKING_STYLES, buildTrackingWidgetMarkup };
+export {
+  TN_POSTA_TRACKING_STYLES,
+  buildTrackingWidgetMarkup,
+  buildTrackingPageFallbackContent,
+};
 
-/** HTML inline con CSS embebido para la API de paginas de Tiendanube (sin iframe). */
+/** HTML publicado en Tiendanube: enlace estilizado que siempre funciona. El script de storefront reemplaza esto con el formulario. */
 export const buildTrackingPageApiContent = (
   appOrigin: string,
   pagePath = "/consulta-envio"
-): string => {
-  const action = appOrigin ? `${appOrigin}${pagePath}` : pagePath;
+): string => buildTrackingPageFallbackContent(appOrigin, pagePath);
 
-  return `<div id="tn-posta-envio"><style>${TN_POSTA_TRACKING_STYLES}</style>${buildTrackingWidgetMarkup(action)}</div>`;
-};
-
-export const buildTrackingPageDisabledContent = (): string =>
-  `<div id="tn-posta-envio"><style>${TN_POSTA_TRACKING_STYLES}</style><div class="tp-card"><p class="tp-disabled">La consulta de seguimiento no est&aacute; disponible en este momento. Contact&aacute; a la tienda si necesit&aacute;s ayuda.</p></div></div>`;
+export { buildTrackingPageDisabledContent } from "@features/public/tracking-widget-styles";
 
 /** HTML para pegar manualmente en el editor de Tiendanube. */
 export const buildEmbedFormHtmlSnippet = (
@@ -28,7 +28,6 @@ export const buildEmbedFormHtmlSnippet = (
   pagePath = "/consulta-envio"
 ): string => buildTrackingPageApiContent(appOrigin, pagePath);
 
-/** Requiere script externo; Tiendanube suele eliminarlo al guardar. */
 export const buildEmbedScriptHtmlSnippet = (appOrigin: string): string =>
   `<div id="tn-posta-envio"></div>
 <script src="${appOrigin}${PUBLIC_EMBED_SCRIPT_PATH}" defer></script>`;
@@ -46,18 +45,10 @@ export const buildEmbedScript = (appOrigin: string): string => {
 
   const css = ${JSON.stringify(TN_POSTA_TRACKING_STYLES)};
 
-  if (!mount.querySelector("style")) {
-    const style = document.createElement("style");
-    style.textContent = css;
-    mount.insertBefore(style, mount.firstChild);
-  }
-
-  if (!mount.querySelector("#tp-form")) {
-    mount.insertAdjacentHTML("beforeend", ${JSON.stringify(widgetMarkup)});
-  }
+  mount.innerHTML = "<style>" + css + "</style>" + ${JSON.stringify(widgetMarkup)};
 
   const form = mount.querySelector("#tp-form");
-  const input = mount.querySelector("#tn-posta-code") || mount.querySelector("#tp-code");
+  const input = mount.querySelector("#tn-posta-code");
   const out = mount.querySelector(".tp-out");
   const btn = form && form.querySelector(".tp-btn");
 
@@ -109,7 +100,7 @@ export const buildEmbedScript = (appOrigin: string): string => {
       }
       renderResult(data);
     } catch {
-      showError("No pudimos consultar el seguimiento. Intenta de nuevo en unos minutos.");
+      window.location.href = form.action + (form.action.indexOf("?") >= 0 ? "&" : "?") + "code=" + encodeURIComponent(code);
     } finally {
       if (btn) btn.disabled = false;
     }

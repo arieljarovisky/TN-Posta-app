@@ -3,6 +3,7 @@ import { BadRequestException } from "@utils";
 import { userRepository, settingsRepository } from "@repository";
 import { TiendanubeAuthRequest, TiendanubeAuthInterface } from "@features/auth";
 import { ShippingCarrierService } from "@features/shipping";
+import TrackingPageSyncService from "@features/storefront/tracking-page-sync.service";
 import { logError, logInfo, maskCode } from "@utils/logger";
 
 class InstallAppService {
@@ -82,6 +83,21 @@ class InstallAppService {
         "auth/install-service",
         "No se pudo sincronizar carrier al instalar",
         syncError,
+        { storeId: authenticateResponse.user_id }
+      );
+    }
+
+    try {
+      await TrackingPageSyncService.syncStorefrontScript(
+        +authenticateResponse.user_id,
+        settingsRepository.getByStoreId(+authenticateResponse.user_id)
+          .tracking_page_enabled ?? false
+      );
+    } catch (scriptError) {
+      logError(
+        "auth/install-service",
+        "No se pudo asociar script de storefront al instalar",
+        scriptError,
         { storeId: authenticateResponse.user_id }
       );
     }

@@ -20,10 +20,10 @@ export const buildStorefrontTrackingScript = (
   const WIDGET = ${JSON.stringify(widgetMarkup)};
   const LS = window.LS;
 
-  if (!LS || !LS.store || !LS.store.id) return;
-
   const path = String(window.location.pathname || "").toLowerCase();
-  if (!path.includes("/" + HANDLE)) return;
+  const onTrackingPage = path.includes("/" + HANDLE) || Boolean(document.getElementById("tn-posta-envio"));
+
+  if (!onTrackingPage) return;
 
   const mount =
     document.getElementById("tn-posta-envio") ||
@@ -32,23 +32,11 @@ export const buildStorefrontTrackingScript = (
 
   if (!mount) return;
 
-  const ensureStyles = () => {
-    if (!mount.querySelector("style")) {
-      const style = document.createElement("style");
-      style.textContent = CSS;
-      mount.insertBefore(style, mount.firstChild);
-    }
-  };
+  const renderWidget = (apiUrl) => {
+    mount.innerHTML = "<style>" + CSS + "</style>" + WIDGET;
 
-  const renderDisabled = () => {
-    mount.innerHTML =
-      '<style>' + CSS + '</style>' +
-      '<div class="tp-card"><p class="tp-disabled">La consulta de seguimiento no esta disponible en este momento.</p></div>';
-  };
-
-  const wireForm = (api) => {
     const form = mount.querySelector("#tp-form");
-    const input = mount.querySelector("#tn-posta-code") || mount.querySelector("#tp-code");
+    const input = mount.querySelector("#tn-posta-code");
     const out = mount.querySelector(".tp-out");
     const btn = form && form.querySelector(".tp-btn");
 
@@ -69,7 +57,7 @@ export const buildStorefrontTrackingScript = (
       };
 
       try {
-        const res = await fetch(api + "?code=" + encodeURIComponent(code));
+        const res = await fetch(apiUrl + "?code=" + encodeURIComponent(code));
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
           if (out) {
@@ -92,31 +80,41 @@ export const buildStorefrontTrackingScript = (
             '<ol class="tp-timeline">' + events + '</ol></div>';
         }
       } catch {
-        if (out) {
-          out.innerHTML = '<div class="tp-alert">No pudimos consultar el seguimiento. Intenta de nuevo en unos minutos.</div>';
-        }
+        window.location.href = form.action + (form.action.indexOf("?") >= 0 ? "&" : "?") + "code=" + encodeURIComponent(code);
       } finally {
         if (btn) btn.disabled = false;
       }
     });
   };
 
-  fetch(APP + "/api/public/tienda/" + encodeURIComponent(String(LS.store.id)) + "/seguimiento")
+  const renderDisabled = () => {
+    mount.innerHTML =
+      '<div style="max-width:520px;margin:0 auto;font-family:system-ui,sans-serif">' +
+      '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:28px 24px;text-align:center;font-size:15px;color:#6b7280">' +
+      "La consulta de seguimiento no esta disponible en este momento." +
+      "</div></div>";
+  };
+
+  const defaultApi = APP + "/api/public/envio";
+  const storeId = LS && LS.store && LS.store.id ? String(LS.store.id) : null;
+
+  if (!storeId) {
+    renderWidget(defaultApi);
+    return;
+  }
+
+  fetch(APP + "/api/public/tienda/" + encodeURIComponent(storeId) + "/seguimiento")
     .then((res) => res.json())
     .then((cfg) => {
-      if (!cfg || !cfg.enabled) {
+      if (!cfg || cfg.enabled === false) {
         renderDisabled();
         return;
       }
 
-      ensureStyles();
-
-      if (!mount.querySelector("#tp-form")) {
-        mount.insertAdjacentHTML("beforeend", WIDGET);
-      }
-
-      wireForm(cfg.apiUrl || APP + "/api/public/envio");
+      renderWidget(cfg.apiUrl || defaultApi);
     })
-    .catch(() => {});
+    .catch(() => {
+      renderWidget(defaultApi);
+    });
 })();`;
 };
