@@ -41,12 +41,33 @@ const Home = () => {
     shippingOptionNames,
     toggleEnabled,
     saveShippingOptionNames,
+    reloadSettings,
   } = useStoreSettings();
   const [shippingNamesInput, setShippingNamesInput] = useState("");
 
   useEffect(() => {
     setShippingNamesInput(shippingOptionNames.join(", "));
   }, [shippingOptionNames]);
+
+  useEffect(() => {
+    if (connected) {
+      return;
+    }
+
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") {
+        reloadSettings();
+      }
+    };
+
+    window.addEventListener("focus", refreshIfVisible);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+
+    return () => {
+      window.removeEventListener("focus", refreshIfVisible);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
+  }, [connected, reloadSettings]);
 
   useEffect(() => {
     const status = getInstallStatusFromUrl();

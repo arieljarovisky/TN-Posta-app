@@ -1,6 +1,6 @@
 import { Alert, Box, Button, Text } from "@nimbus-ds/components";
 
-import { OAUTH_INSTALL_URL } from "@/app/oauth/installUi";
+import { openOAuthInstallUrl } from "@/app/oauth/installUi";
 
 type ReinstallStoreAlertProps = {
   title: string;
@@ -14,7 +14,11 @@ const ReinstallStoreAlert = ({
   <Alert appearance="warning" title={title}>
     <Box display="flex" flexDirection="column" gap="3">
       <Text>{description}</Text>
-      <Button as="a" appearance="primary" href={OAUTH_INSTALL_URL}>
+      <Text fontSize="caption" color="neutral-textLow">
+        Se abrirá la autorización de Tiendanube. Al terminar, volvé al admin y
+        recargá esta página.
+      </Text>
+      <Button appearance="primary" onClick={openOAuthInstallUrl}>
         Reconectar tienda
       </Button>
     </Box>
