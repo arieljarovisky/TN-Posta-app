@@ -2,9 +2,32 @@ export const PUBLIC_EMBED_SCRIPT_PATH = "/embed/envio.js";
 
 export const PUBLIC_ENVIO_API_PATH = "/api/public/envio";
 
-export const buildEmbedHtmlSnippet = (appOrigin: string): string =>
+/** Tiendanube elimina etiquetas script al guardar paginas: usar formulario HTML puro. */
+export const buildEmbedFormHtmlSnippet = (
+  appOrigin: string,
+  pagePath = "/consulta-envio"
+): string => {
+  const action = `${appOrigin}${pagePath}`;
+
+  return `<div style="max-width:520px;margin:0 auto;font-family:system-ui,-apple-system,sans-serif;color:#111827">
+  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 28px rgba(17,24,39,.06);padding:28px 24px">
+    <p style="margin:0 0 24px;text-align:center;font-size:15px;line-height:1.55;color:#374151">Ingres&aacute; tu c&oacute;digo de seguimiento para conocer el estado de tu env&iacute;o.</p>
+    <form action="${action}" method="get" target="_blank" rel="noopener noreferrer">
+      <label style="display:block;margin:0 0 10px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;text-align:center" for="tn-posta-code">C&oacute;digo de seguimiento</label>
+      <input id="tn-posta-code" name="code" required placeholder="TPA00100001" autocomplete="off" style="width:100%;padding:18px 16px;border:1px solid #d1d5db;border-radius:10px;font-size:22px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-align:center;box-sizing:border-box" />
+      <p style="margin:10px 0 18px;text-align:center;font-size:13px;color:#6b7280">El c&oacute;digo figura en el mail de confirmaci&oacute;n de env&iacute;o.</p>
+      <button type="submit" style="width:100%;border:none;border-radius:10px;padding:16px;background:#111827;color:#fff;font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;cursor:pointer">Consultar</button>
+    </form>
+  </div>
+</div>`;
+};
+
+/** Requiere script externo; Tiendanube suele eliminarlo al guardar. */
+export const buildEmbedScriptHtmlSnippet = (appOrigin: string): string =>
   `<div id="tn-posta-envio"></div>
 <script src="${appOrigin}${PUBLIC_EMBED_SCRIPT_PATH}" defer></script>`;
+
+export const buildEmbedHtmlSnippet = buildEmbedFormHtmlSnippet;
 
 export const buildEmbedScript = (appOrigin: string): string => `(() => {
   const API = ${JSON.stringify(appOrigin)} + "/api/public/envio";

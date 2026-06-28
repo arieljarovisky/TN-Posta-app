@@ -86,9 +86,9 @@ const TrackingPagePanel = ({
           <Box display="flex" flexDirection="column" gap="2">
             <Text fontWeight="medium">Codigo para Tiendanube (recomendado)</Text>
             <Text fontSize="caption" color="neutral-textLow">
-              Tiendanube bloquea iframes externos: el recuadro queda en blanco. En
-              su lugar, pega este codigo en Paginas → Seguimiento de envios →
-              editor HTML.
+              Tiendanube elimina etiquetas script e iframes al guardar. Usa este
+              formulario HTML (sin JavaScript): Paginas → Seguimiento de envios →
+              reemplaza todo el contenido y pega el codigo.
             </Text>
             {embedHtml && (
               <Box
@@ -123,8 +123,8 @@ const TrackingPagePanel = ({
           <Box display="flex" flexDirection="column" gap="2">
             <Text fontWeight="medium">Enlace en el menu</Text>
             <Text fontSize="caption" color="neutral-textLow">
-              Alternativa: agrega un enlace en el menu apuntando a esta URL (abre la
-              consulta en una pagina completa).
+              Alternativa: enlace en el menu a esta URL. Al consultar, el cliente ve
+              el resultado en una pesta&ntilde;a nueva.
             </Text>
             <Text fontSize="caption">{pageUrl}</Text>
             <Box display="flex" flexWrap="wrap" gap="2">

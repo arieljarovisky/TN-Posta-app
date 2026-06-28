@@ -8,6 +8,7 @@ import { BadRequestException, StatusCode } from "@utils";
 import { getAllZoneCoverage } from "@utils/zone/zone-coverage";
 import {
   getPublicEmbedHtml,
+  getPublicEmbedScriptHtml,
   getPublicEmbedScriptUrl,
   getPublicTrackingPageUrl,
   getStorePublicUrl,
@@ -41,6 +42,7 @@ const buildSettingsResponse = (
   tracking_page_url: getPublicTrackingPageUrl(req),
   tracking_page_embed_script_url: getPublicEmbedScriptUrl(req),
   tracking_page_embed_html: getPublicEmbedHtml(req),
+  tracking_page_embed_script_html: getPublicEmbedScriptHtml(req),
   store_public_url: getStorePublicUrl() ?? null,
   shipping_sync_message,
   updated_at: data.updated_at,

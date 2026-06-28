@@ -1,5 +1,6 @@
 import {
-  buildEmbedHtmlSnippet,
+  buildEmbedFormHtmlSnippet,
+  buildEmbedScriptHtmlSnippet,
   PUBLIC_EMBED_SCRIPT_PATH,
 } from "@features/public/embed-widget";
 import { PUBLIC_SHIPPING_PAGE_PATH } from "./public-pages";
@@ -91,7 +92,12 @@ export const getPublicEmbedScriptUrl = (req?: {
 export const getPublicEmbedHtml = (req?: {
   protocol?: string;
   get?: (name: string) => string | undefined;
-}): string => buildEmbedHtmlSnippet(getAppPublicBaseUrl(req));
+}): string => buildEmbedFormHtmlSnippet(getAppPublicBaseUrl(req), PUBLIC_SHIPPING_PAGE_PATH);
+
+export const getPublicEmbedScriptHtml = (req?: {
+  protocol?: string;
+  get?: (name: string) => string | undefined;
+}): string => buildEmbedScriptHtmlSnippet(getAppPublicBaseUrl(req));
 
 export const getStorePublicUrl = (): string | undefined => {
   const slug = getStoreSlug();
