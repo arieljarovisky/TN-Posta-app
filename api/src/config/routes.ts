@@ -7,59 +7,63 @@ import { ProductController } from "@features/product";
 import { ShipmentController } from "@features/shipment";
 
 const routes = Router();
+const apiRoutes = Router();
+
 routes.get("/auth/install", AuthenticationController.install);
 
-routes.get(
+apiRoutes.get(
   "/orders",
   passport.authenticate("jwt", { session: false }),
   OrderController.getAll
 );
-routes.get(
+apiRoutes.get(
   "/orders/:orderId",
   passport.authenticate("jwt", { session: false }),
   OrderController.getOne
 );
 
-routes.get(
+apiRoutes.get(
   "/shipments",
   passport.authenticate("jwt", { session: false }),
   ShipmentController.getAll
 );
-routes.get(
+apiRoutes.get(
   "/shipments/:shipmentId",
   passport.authenticate("jwt", { session: false }),
   ShipmentController.getOne
 );
-routes.post(
+apiRoutes.post(
   "/shipments",
   passport.authenticate("jwt", { session: false }),
   ShipmentController.create
 );
-routes.get(
+apiRoutes.get(
   "/shipments/:shipmentId/label",
   passport.authenticate("jwt", { session: false }),
   ShipmentController.downloadLabel
 );
-routes.post(
+apiRoutes.post(
   "/products",
   passport.authenticate("jwt", { session: false }),
   ProductController.create
 );
 
-routes.get(
+apiRoutes.get(
   "/products/total",
   passport.authenticate("jwt", { session: false }),
   ProductController.getTotal
 );
-routes.get(
+apiRoutes.get(
   "/products",
   passport.authenticate("jwt", { session: false }),
   ProductController.getAll
 );
-routes.delete(
+apiRoutes.delete(
   "/products/:id",
   passport.authenticate("jwt", { session: false }),
   ProductController.delete
 );
+
+routes.use("/api", apiRoutes);
 
 export default routes;
