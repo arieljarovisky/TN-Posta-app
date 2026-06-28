@@ -11,6 +11,7 @@ const routes = Router();
 const apiRoutes = Router();
 
 routes.get("/auth/install", AuthenticationController.install);
+routes.get("/auth/status", AuthenticationController.status);
 
 routes.post("/webhooks/store/redact", WebhookController.storeRedact);
 routes.post("/webhooks/customers/redact", WebhookController.customersRedact);

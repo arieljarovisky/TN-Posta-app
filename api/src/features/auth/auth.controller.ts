@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { StatusCode } from "@utils";
 import { InstallAppService, AuthService } from "@features/auth";
+import { userRepository } from "@repository";
 
 class AuthenticationController {
   async install(
@@ -15,9 +16,11 @@ class AuthenticationController {
         return res.redirect("/?install=missing_code");
       }
 
-      await InstallAppService.install(code);
-      return res.redirect("/?installed=1");
-    } catch (e) {
+    await InstallAppService.install(code);
+    console.info("[auth/install] Instalacion completada correctamente");
+    return res.redirect("/?installed=1");
+  } catch (e) {
+    console.error("[auth/install] Error de instalacion:", e);
       const message =
         e instanceof Error ? e.message : "No se pudo completar la instalacion";
 
@@ -26,6 +29,24 @@ class AuthenticationController {
       );
     }
   }
+
+  async status(
+    _req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<Response | void> {
+    try {
+      const credentials = userRepository.findFirst();
+
+      return res.status(StatusCode.OK).json({
+        installed: Boolean(credentials?.access_token),
+        store_id: credentials?.user_id ?? null,
+      });
+    } catch (e) {
+      return next(e);
+    }
+  }
+
   async login(
     req: Request,
     res: Response,

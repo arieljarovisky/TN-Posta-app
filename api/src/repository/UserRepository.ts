@@ -50,6 +50,11 @@ class UserRepository {
     return database.get("credentials").value()?.[0];
   }
 
+  hasCredentials(): boolean {
+    const credentials = database.get("credentials").value() ?? [];
+    return credentials.some((credential) => Boolean(credential.access_token));
+  }
+
   deleteByStoreId(storeId: number): void {
     const credentials =
       database
