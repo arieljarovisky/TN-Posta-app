@@ -9,6 +9,10 @@ import { ShipmentController } from "@features/shipment";
 import { ShippingController } from "@features/shipping";
 import { ZoneController } from "@features/zone";
 import { PublicTrackingController } from "@features/public";
+import {
+  LEGACY_SHIPPING_PAGE_PATH,
+  PUBLIC_SHIPPING_PAGE_PATH,
+} from "@config/public-pages";
 import { WebhookController } from "@features/webhook";
 import { requireServiceEnabledMiddleware, requireStoreCredentialsMiddleware } from "@middlewares";
 
@@ -24,8 +28,10 @@ routes.post("/shipping/rates", ShippingController.calculateRates);
 
 routes.get("/api/public/tracking/:trackingCode", PublicTrackingController.getTracking);
 routes.get("/api/public/tracking", PublicTrackingController.getTracking);
-routes.get("/seguimiento", PublicTrackingController.getTrackingPage);
-routes.get("/seguimiento/:trackingCode", PublicTrackingController.getTrackingPage);
+routes.get(PUBLIC_SHIPPING_PAGE_PATH, PublicTrackingController.getTrackingPage);
+routes.get(`${PUBLIC_SHIPPING_PAGE_PATH}/:trackingCode`, PublicTrackingController.getTrackingPage);
+routes.get(LEGACY_SHIPPING_PAGE_PATH, PublicTrackingController.redirectLegacyTrackingPage);
+routes.get(`${LEGACY_SHIPPING_PAGE_PATH}/:trackingCode`, PublicTrackingController.redirectLegacyTrackingPage);
 routes.get("/api/public/entrega/:trackingCode", PublicTrackingController.getDeliveryPage);
 routes.post("/api/public/entrega/:trackingCode", PublicTrackingController.confirmDelivery);
 

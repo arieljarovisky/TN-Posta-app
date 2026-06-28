@@ -12,7 +12,9 @@ dotenv.config({
 });
 
 import { AppRoutes } from "@config";
+import { isPublicShippingPagePath } from "@config/public-pages";
 import {
+  allowIframeEmbedMiddleware,
   authRequestLoggerMiddleware,
   beforeCheckClientMiddleware,
   errorHandlingMiddleware,
@@ -54,6 +56,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cors());
+app.use(allowIframeEmbedMiddleware);
 app.use(oauthCallbackLoggerMiddleware);
 app.use(authRequestLoggerMiddleware);
 app.use(beforeCheckClientMiddleware);
@@ -68,7 +71,7 @@ if (fs.existsSync(frontendDist)) {
       return next();
     }
 
-    if (req.path.startsWith("/seguimiento")) {
+    if (isPublicShippingPagePath(req.path)) {
       return next();
     }
 

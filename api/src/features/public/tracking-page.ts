@@ -1,3 +1,4 @@
+import { PUBLIC_SHIPPING_PAGE_PATH } from "@config/public-pages";
 import { PublicTrackingPayload } from "@features/public/tracking-data";
 
 const escHtml = (value: unknown): string =>
@@ -337,7 +338,8 @@ export const buildTrackingPageHtml = (options: TrackingPageOptions): string => {
     <section class="card">
       <p class="intro">${escHtml(introText)}</p>
 
-      <form method="get" action="/seguimiento">
+      <form method="get" action="${PUBLIC_SHIPPING_PAGE_PATH}">
+        ${embed ? '<input type="hidden" name="embed" value="1" />' : ""}
         <label class="field-label" for="code">Código de seguimiento</label>
         <input
           id="code"

@@ -36,7 +36,7 @@ const TrackingPagePanel = ({
   };
 
   const embedCode = pageUrl
-    ? `<iframe src="${pageUrl}?embed=1" title="Seguimiento de envio" width="100%" height="420" style="border:0;border-radius:12px;background:#eceff3;" loading="lazy"></iframe>`
+    ? `<iframe src="${pageUrl}?embed=1" title="Consulta de envio" width="100%" height="480" style="border:0;border-radius:12px;background:#fff;" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`
     : "";
 
   const copyEmbed = async () => {
@@ -130,6 +130,12 @@ const TrackingPagePanel = ({
           codigo.
         </Text>
       )}
+
+      <Text fontSize="caption" color="neutral-textLow">
+        Si el iframe queda en blanco, desactiva el bloqueador de anuncios o usa
+        la URL como enlace en el menu. Algunos bloqueadores filtran rutas con
+        palabras como seguimiento o tracking.
+      </Text>
 
       <Button appearance="primary" disabled={disabled || saving} onClick={onSave}>
         {saving ? "Guardando..." : "Guardar pagina de seguimiento"}

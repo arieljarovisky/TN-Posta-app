@@ -1,3 +1,5 @@
+import { PUBLIC_SHIPPING_PAGE_PATH } from "./public-pages";
+
 export const getClientId = (): string => process.env.CLIENT_ID ?? "35321";
 
 export const getStoreSlug = (): string | undefined => {
@@ -70,7 +72,7 @@ export const getPublicTrackingPageUrl = (req?: {
 }): string => {
   const base = getAppPublicBaseUrl(req);
 
-  return base ? `${base}/seguimiento` : "/seguimiento";
+  return base ? `${base}${PUBLIC_SHIPPING_PAGE_PATH}` : PUBLIC_SHIPPING_PAGE_PATH;
 };
 
 export const getStorePublicUrl = (): string | undefined => {

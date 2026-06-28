@@ -5,6 +5,7 @@ import {
   buildPublicTrackingPayload,
 } from "@features/public/tracking-data";
 import { buildTrackingPageHtml } from "@features/public/tracking-page";
+import { PUBLIC_SHIPPING_PAGE_PATH } from "@config/public-pages";
 import TrackingService, {
   isValidTrackingCode,
   normalizeTrackingCode,
@@ -61,6 +62,26 @@ class PublicTrackingController {
     } catch (error) {
       next(error);
     }
+  }
+
+  redirectLegacyTrackingPage(
+    req: Request,
+    res: Response,
+    _next: NextFunction
+  ): Response | void {
+    const trackingCode = req.params.trackingCode;
+    const query = new URLSearchParams(req.query as Record<string, string>);
+
+    if (trackingCode) {
+      return res.redirect(
+        301,
+        `${PUBLIC_SHIPPING_PAGE_PATH}/${encodeURIComponent(trackingCode)}?${query.toString()}`
+      );
+    }
+
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+
+    return res.redirect(301, `${PUBLIC_SHIPPING_PAGE_PATH}${suffix}`);
   }
 
   getTrackingPage(
