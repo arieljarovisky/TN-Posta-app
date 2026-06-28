@@ -2,7 +2,7 @@ import low from "lowdb";
 import FileSync from "lowdb/adapters/FileSync";
 
 import { StoreSettings } from "@features/settings/interfaces/store-settings.interface";
-import { getDatabasePath } from "@config/database";
+import { getDatabasePath } from "../config/database";
 
 interface IDatabase {
   store_settings: StoreSettings[];

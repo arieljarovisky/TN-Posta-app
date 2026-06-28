@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import fs from "fs";
-import { getDatabasePath } from "@config/database";
+import { getDatabasePath } from "../config/database";
 
 import { BadRequestException, HttpErrorException } from "@utils";
 import { logError, logInfo } from "@utils/logger";

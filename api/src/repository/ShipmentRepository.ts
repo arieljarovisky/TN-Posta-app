@@ -1,7 +1,7 @@
 import low from "lowdb";
 import FileSync from "lowdb/adapters/FileSync";
 import { Shipment } from "@features/shipment/interfaces/shipment.interface";
-import { getDatabasePath } from "@config/database";
+import { getDatabasePath } from "../config/database";
 import { HttpErrorException } from "@utils";
 
 interface IDatabase {

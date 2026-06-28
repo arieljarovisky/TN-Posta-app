@@ -2,7 +2,7 @@ import jsonServer from "json-server";
 import low from "lowdb";
 import FileSync from "lowdb/adapters/FileSync";
 import { TiendanubeAuthInterface } from "@features/auth";
-import { getDatabasePath } from "@config/database";
+import { getDatabasePath } from "../config/database";
 import { HttpErrorException } from "@utils";
 
 /**
