@@ -18,6 +18,7 @@ import {
 import { LocationIcon, TruckIcon } from "@nimbus-ds/icons";
 
 import { nexo } from "@/app";
+import { ReinstallStoreAlert } from "@/components";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import {
   clearInstallParamsFromUrl,
@@ -29,7 +30,8 @@ const Home = () => {
   const { t } = useTranslation("translations");
   const { addToast } = useToast();
   const [searchParams] = useSearchParams();
-  const { enabled, loading, saving, loadError, toggleEnabled } = useStoreSettings();
+  const { enabled, loading, saving, loadError, connected, toggleEnabled } =
+    useStoreSettings();
 
   useEffect(() => {
     navigateHeaderRemove(nexo);
@@ -107,6 +109,13 @@ const Home = () => {
                 </Alert>
               )}
 
+              {!loading && !connected && (
+                <ReinstallStoreAlert
+                  title={t("home.reconnectTitle")}
+                  description={t("home.reconnectBody")}
+                />
+              )}
+
               <Card>
                 <Card.Header title={t("home.serviceStatus")} />
                 <Card.Body>
@@ -152,7 +161,7 @@ const Home = () => {
                 </Card.Body>
               </Card>
 
-              {enabled && (
+              {enabled && connected && (
                 <Box display="flex" flexDirection="column" gap="3">
                   <Title as="h6">{t("home.manageTitle")}</Title>
 

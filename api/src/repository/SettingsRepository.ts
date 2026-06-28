@@ -1,14 +1,14 @@
-import path from "path";
 import low from "lowdb";
 import FileSync from "lowdb/adapters/FileSync";
 
 import { StoreSettings } from "@features/settings/interfaces/store-settings.interface";
+import { getDatabasePath } from "@config/database";
 
 interface IDatabase {
   store_settings: StoreSettings[];
 }
 
-const adapter = new FileSync<IDatabase>(path.resolve("db.json"));
+const adapter = new FileSync<IDatabase>(getDatabasePath());
 const database = low(adapter);
 
 database.defaults({ store_settings: [] }).write();

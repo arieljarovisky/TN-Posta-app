@@ -1,15 +1,15 @@
 import jsonServer from "json-server";
-import path from "path";
 import low from "lowdb";
 import FileSync from "lowdb/adapters/FileSync";
 import { TiendanubeAuthInterface } from "@features/auth";
+import { getDatabasePath } from "@config/database";
 import { HttpErrorException } from "@utils";
 
 /**
  * this repository is temporary, please use real database to production mode
  */
 
-const userRepository = jsonServer.router(path.resolve("db.json"));
+const userRepository = jsonServer.router(getDatabasePath());
 
 const server = jsonServer.create();
 const middleware = jsonServer.defaults();
@@ -21,7 +21,7 @@ interface IDatabase {
   credentials: TiendanubeAuthInterface[];
 }
 
-const adapter = new FileSync<IDatabase>(path.resolve("db.json"));
+const adapter = new FileSync<IDatabase>(getDatabasePath());
 const database = low(adapter);
 
 class UserRepository {

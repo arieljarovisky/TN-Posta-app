@@ -1,14 +1,14 @@
-import path from "path";
 import low from "lowdb";
 import FileSync from "lowdb/adapters/FileSync";
 import { Shipment } from "@features/shipment/interfaces/shipment.interface";
+import { getDatabasePath } from "@config/database";
 import { HttpErrorException } from "@utils";
 
 interface IDatabase {
   shipments: Shipment[];
 }
 
-const adapter = new FileSync<IDatabase>(path.resolve("db.json"));
+const adapter = new FileSync<IDatabase>(getDatabasePath());
 const database = low(adapter);
 
 database.defaults({ shipments: [] }).write();

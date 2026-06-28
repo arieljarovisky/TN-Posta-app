@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import fs from "fs";
-import path from "path";
+import { getDatabasePath } from "@config/database";
 
 import { BadRequestException, HttpErrorException } from "@utils";
 import { logError, logInfo } from "@utils/logger";
@@ -43,7 +43,7 @@ export const errorHandlingMiddleware = (
 };
 
 export const logStartupState = (): void => {
-  const dbPath = path.resolve("db.json");
+  const dbPath = getDatabasePath();
 
   logInfo("startup", "Estado db.json al iniciar", {
     dbPath,

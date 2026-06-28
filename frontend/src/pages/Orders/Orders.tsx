@@ -18,18 +18,23 @@ import {
 } from "@nimbus-ds/components";
 
 import { nexo } from "@/app";
-import { Responsive } from "@/components";
+import { ReinstallStoreAlert, Responsive } from "@/components";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { createShipment, fetchEligibleOrders } from "@/services/shipments.api";
 import { OrderSummary } from "@/types/api";
+
+const isUnauthorizedError = (error: unknown): boolean =>
+  (error as { response?: { status?: number } })?.response?.status === 401;
 
 const Orders = () => {
   const { t } = useTranslation("translations");
   const navigate = useNavigate();
   const { addToast } = useToast();
-  const { enabled: serviceEnabled, loading: settingsLoading } = useStoreSettings();
+  const { enabled: serviceEnabled, loading: settingsLoading, connected } =
+    useStoreSettings();
   const [orders, setOrders] = useState<OrderSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [needsReconnect, setNeedsReconnect] = useState(false);
   const [creating, setCreating] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderSummary | null>(null);
   const [notes, setNotes] = useState("");
@@ -45,11 +50,18 @@ const Orders = () => {
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
+    setNeedsReconnect(false);
 
     try {
       const data = await fetchEligibleOrders();
       setOrders(data.filter((order) => !order.has_shipment));
-    } catch {
+    } catch (error) {
+      if (isUnauthorizedError(error)) {
+        setNeedsReconnect(true);
+        setOrders([]);
+        return;
+      }
+
       showToast("danger", t("errors.generic"));
     } finally {
       setLoading(false);
@@ -59,15 +71,16 @@ const Orders = () => {
   useEffect(() => {
     navigateHeader(nexo, { goTo: "/", text: t("app.backHome") });
 
-    if (!settingsLoading && serviceEnabled) {
+    if (!settingsLoading && serviceEnabled && connected) {
       loadOrders();
       return;
     }
 
     if (!settingsLoading) {
       setLoading(false);
+      setNeedsReconnect(!connected && serviceEnabled);
     }
-  }, [loadOrders, serviceEnabled, settingsLoading, t]);
+  }, [connected, loadOrders, serviceEnabled, settingsLoading, t]);
 
   const handleCreateShipment = async () => {
     if (!selectedOrder) {
@@ -147,13 +160,20 @@ const Orders = () => {
               </Alert>
             )}
 
-            {!loading && !settingsLoading && serviceEnabled && orders.length === 0 && (
+            {!loading && !settingsLoading && serviceEnabled && needsReconnect && (
+              <ReinstallStoreAlert
+                title={t("home.reconnectTitle")}
+                description={t("orders.reconnectRequired")}
+              />
+            )}
+
+            {!loading && !settingsLoading && serviceEnabled && !needsReconnect && orders.length === 0 && (
               <Alert appearance="neutral" title={t("orders.empty")}>
                 <Text>{t("orders.empty")}</Text>
               </Alert>
             )}
 
-            {!loading && !settingsLoading && serviceEnabled && orders.length > 0 && (
+            {!loading && !settingsLoading && serviceEnabled && !needsReconnect && orders.length > 0 && (
               <Responsive
                 mobileContent={
                   <Box display="flex" flexDirection="column" gap="3">

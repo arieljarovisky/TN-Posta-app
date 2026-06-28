@@ -2,8 +2,14 @@ const fs = require("fs");
 const path = require("path");
 
 const apiDir = __dirname;
-const dbPath = path.join(apiDir, "db.json");
+const dbPath = process.env.DATABASE_PATH
+  ? path.resolve(process.env.DATABASE_PATH)
+  : path.join(apiDir, "db.json");
 const dbExamplePath = path.join(apiDir, "db.example.json");
+
+if (!fs.existsSync(path.dirname(dbPath))) {
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+}
 
 if (!fs.existsSync(dbPath)) {
   fs.copyFileSync(dbExamplePath, dbPath);

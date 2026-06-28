@@ -7,6 +7,7 @@ import {
 
 export const useStoreSettings = () => {
   const [enabled, setEnabled] = useState(false);
+  const [connected, setConnected] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -18,6 +19,7 @@ export const useStoreSettings = () => {
     try {
       const data = await fetchStoreSettings();
       setEnabled(data.enabled);
+      setConnected(data.connected);
     } catch {
       setLoadError("No se pudo cargar la configuracion del servicio.");
     } finally {
@@ -35,6 +37,7 @@ export const useStoreSettings = () => {
     try {
       const data = await updateStoreSettings(nextEnabled);
       setEnabled(data.enabled);
+      setConnected(data.connected);
       setLoadError(null);
       return true;
     } catch {
@@ -46,6 +49,7 @@ export const useStoreSettings = () => {
 
   return {
     enabled,
+    connected,
     loading,
     saving,
     loadError,

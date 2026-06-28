@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 
 import SettingsService from "@features/settings/settings.service";
 import { UpdateStoreSettingsRequest } from "@features/settings/interfaces/store-settings.interface";
+import { userRepository } from "@repository";
 import { BadRequestException, StatusCode } from "@utils";
 
 class SettingsController {
@@ -12,9 +13,13 @@ class SettingsController {
   ): Promise<Response | void> {
     try {
       const data = SettingsService.getStoreSettings(+req.user.user_id);
+      const connected = Boolean(
+        userRepository.findOptional(+req.user.user_id)?.access_token
+      );
 
       return res.status(StatusCode.OK).json({
         enabled: data.enabled,
+        connected,
         updated_at: data.updated_at,
       });
     } catch (error) {
@@ -41,9 +46,13 @@ class SettingsController {
         +req.user.user_id,
         payload.enabled
       );
+      const connected = Boolean(
+        userRepository.findOptional(+req.user.user_id)?.access_token
+      );
 
       return res.status(StatusCode.OK).json({
         enabled: data.enabled,
+        connected,
         updated_at: data.updated_at,
       });
     } catch (error) {

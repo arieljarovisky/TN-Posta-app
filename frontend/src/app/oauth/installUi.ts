@@ -14,3 +14,6 @@ export const isTiendanubeEmbedded = (): boolean => {
 
 export const TIENDANUBE_ADMIN_URL =
   "https://www.tiendanube.com/admin/v2/apps/35321";
+
+export const OAUTH_INSTALL_URL =
+  "https://www.tiendanube.com/apps/35321/authorize?state=install";

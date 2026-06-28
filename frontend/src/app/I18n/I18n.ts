@@ -38,11 +38,16 @@ const resources = {
           "Consulta envios ya creados y descarga las etiquetas en PDF.",
         coverageTitle: "Cobertura",
         coverageBody: "Capital Federal y Gran Buenos Aires unicamente.",
+        reconnectTitle: "Tienda desconectada",
+        reconnectBody:
+          "Las credenciales OAuth se perdieron (suele pasar tras un redeploy). Reconecta la tienda para ver pedidos y crear envios.",
       },
       orders: {
         title: "Pedidos",
         empty: "No hay pedidos elegibles en CABA o GBA.",
         serviceDisabled: "Activa TN Posta desde la pantalla principal para ver pedidos.",
+        reconnectRequired:
+          "La tienda no esta conectada. Reconectala para consultar pedidos de Tiendanube.",
         createShipment: "Crear envio",
         hasShipment: "Envio creado",
         zone: "Zona",
@@ -55,6 +60,8 @@ const resources = {
         title: "Envios",
         empty: "Todavia no creaste envios.",
         serviceDisabled: "Activa TN Posta desde la pantalla principal para ver envios.",
+        reconnectRequired:
+          "La tienda no esta conectada. Reconectala para consultar envios.",
         downloadLabel: "Descargar etiqueta",
         order: "Pedido",
         zone: "Zona",

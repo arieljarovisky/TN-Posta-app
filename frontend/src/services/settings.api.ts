@@ -2,6 +2,7 @@ import axios from "@/app/Axios";
 
 export interface StoreSettingsResponse {
   enabled: boolean;
+  connected: boolean;
   updated_at: string;
 }
 

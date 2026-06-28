@@ -16,7 +16,7 @@ import {
 import { DownloadIcon } from "@nimbus-ds/icons";
 
 import { nexo } from "@/app";
-import { Responsive } from "@/components";
+import { ReinstallStoreAlert, Responsive } from "@/components";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import {
   downloadShipmentLabel,
@@ -24,13 +24,18 @@ import {
 } from "@/services/shipments.api";
 import { Shipment } from "@/types/api";
 
+const isUnauthorizedError = (error: unknown): boolean =>
+  (error as { response?: { status?: number } })?.response?.status === 401;
+
 const Shipments = () => {
   const { t } = useTranslation("translations");
   const navigate = useNavigate();
   const { addToast } = useToast();
-  const { enabled: serviceEnabled, loading: settingsLoading } = useStoreSettings();
+  const { enabled: serviceEnabled, loading: settingsLoading, connected } =
+    useStoreSettings();
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [needsReconnect, setNeedsReconnect] = useState(false);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const showToast = (type: "success" | "danger", text: string) => {
@@ -44,10 +49,17 @@ const Shipments = () => {
 
   const loadShipments = useCallback(async () => {
     setLoading(true);
+    setNeedsReconnect(false);
 
     try {
       setShipments(await fetchShipments());
-    } catch {
+    } catch (error) {
+      if (isUnauthorizedError(error)) {
+        setNeedsReconnect(true);
+        setShipments([]);
+        return;
+      }
+
       showToast("danger", t("errors.generic"));
     } finally {
       setLoading(false);
@@ -57,15 +69,16 @@ const Shipments = () => {
   useEffect(() => {
     navigateHeader(nexo, { goTo: "/", text: t("app.backHome") });
 
-    if (!settingsLoading && serviceEnabled) {
+    if (!settingsLoading && serviceEnabled && connected) {
       loadShipments();
       return;
     }
 
     if (!settingsLoading) {
       setLoading(false);
+      setNeedsReconnect(!connected && serviceEnabled);
     }
-  }, [loadShipments, serviceEnabled, settingsLoading, t]);
+  }, [connected, loadShipments, serviceEnabled, settingsLoading, t]);
 
   const handleDownload = async (shipment: Shipment) => {
     setDownloadingId(shipment.id);
@@ -142,13 +155,20 @@ const Shipments = () => {
               </Alert>
             )}
 
-            {!loading && !settingsLoading && serviceEnabled && shipments.length === 0 && (
+            {!loading && !settingsLoading && serviceEnabled && needsReconnect && (
+              <ReinstallStoreAlert
+                title={t("home.reconnectTitle")}
+                description={t("shipments.reconnectRequired")}
+              />
+            )}
+
+            {!loading && !settingsLoading && serviceEnabled && !needsReconnect && shipments.length === 0 && (
               <Alert appearance="neutral" title={t("shipments.empty")}>
                 <Text>{t("shipments.empty")}</Text>
               </Alert>
             )}
 
-            {!loading && !settingsLoading && serviceEnabled && shipments.length > 0 && (
+            {!loading && !settingsLoading && serviceEnabled && !needsReconnect && shipments.length > 0 && (
               <Responsive
                 mobileContent={
                   <Box display="flex" flexDirection="column" gap="3">
