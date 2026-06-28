@@ -7,12 +7,22 @@ import Router from "./Router";
 import nexo from "./NexoClient";
 import NexoSyncRoute from "./NexoSyncRoute";
 import { DarkModeProvider } from "./DarkModeProvider";
+import {
+  completeOAuthInstallIfNeeded,
+} from "./oauth/oauthInstall";
 import "./I18n";
 
 const App = () => {
   const [isConnect, setIsConnect] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(
+    () => completeOAuthInstallIfNeeded()
+  );
 
   useEffect(() => {
+    if (isInstalling) {
+      return;
+    }
+
     if (!isConnect) {
       connect(nexo)
         .then(async () => {
@@ -23,7 +33,20 @@ const App = () => {
           setIsConnect(false);
         });
     }
-  }, [isConnect]);
+  }, [isConnect, isInstalling]);
+
+  if (isInstalling) {
+    return (
+      <Box
+        height="100vh"
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+      >
+        <Text>Instalando aplicacion...</Text>
+      </Box>
+    );
+  }
 
   if (!isConnect) {
     return (

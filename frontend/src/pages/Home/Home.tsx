@@ -1,20 +1,68 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { navigateHeaderRemove } from "@tiendanube/nexo";
 import { Layout, Page } from "@nimbus-ds/patterns";
-import { Box, Button, Card, Text, Title } from "@nimbus-ds/components";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  Text,
+  Title,
+  useToast,
+} from "@nimbus-ds/components";
 import { LocationIcon, TruckIcon } from "@nimbus-ds/icons";
 
 import { nexo } from "@/app";
+import {
+  clearInstallParamsFromUrl,
+  getInstallStatusFromUrl,
+} from "@/app/oauth/oauthInstall";
 
 const Home = () => {
   const navigate = useNavigate();
   const { t } = useTranslation("translations");
+  const { addToast } = useToast();
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     navigateHeaderRemove(nexo);
   }, []);
+
+  useEffect(() => {
+    const status = getInstallStatusFromUrl();
+
+    if (status.installed) {
+      addToast({
+        id: crypto.randomUUID(),
+        type: "success",
+        text: "Aplicacion instalada correctamente.",
+        duration: 5000,
+      });
+      clearInstallParamsFromUrl();
+    }
+
+    if (status.missingCode) {
+      addToast({
+        id: crypto.randomUUID(),
+        type: "danger",
+        text: "Falta el codigo de autorizacion. Reinstala la app desde el portal.",
+        duration: 6000,
+      });
+      clearInstallParamsFromUrl();
+    }
+
+    if (status.error) {
+      addToast({
+        id: crypto.randomUUID(),
+        type: "danger",
+        text: decodeURIComponent(status.error),
+        duration: 6000,
+      });
+      clearInstallParamsFromUrl();
+    }
+  }, [addToast, searchParams]);
 
   return (
     <Page>
@@ -24,6 +72,14 @@ const Home = () => {
           <Layout.Section>
             <Box display="flex" flexDirection="column" gap="4">
               <Text>{t("home.description")}</Text>
+
+              <Alert appearance="neutral" title="Primera vez?">
+                <Text>
+                  Si la app abre directo sin pedir permisos, desinstalala desde
+                  la tienda Lupo (Apps → Posta → Desinstalar) y volve a
+                  instalar desde el portal de socios.
+                </Text>
+              </Alert>
 
               <Card>
                 <Card.Header title={t("home.ordersCard")} />

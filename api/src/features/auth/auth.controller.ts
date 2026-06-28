@@ -9,12 +9,21 @@ class AuthenticationController {
     next: NextFunction
   ): Promise<Response | void> {
     try {
-      const data = await InstallAppService.install(
-        req.query.code as string
-      );
-      return res.status(StatusCode.OK).json(data);
+      const code = req.query.code as string;
+
+      if (!code) {
+        return res.redirect("/?install=missing_code");
+      }
+
+      await InstallAppService.install(code);
+      return res.redirect("/?installed=1");
     } catch (e) {
-      return next(e);
+      const message =
+        e instanceof Error ? e.message : "No se pudo completar la instalacion";
+
+      return res.redirect(
+        `/?install_error=${encodeURIComponent(message)}`
+      );
     }
   }
   async login(
