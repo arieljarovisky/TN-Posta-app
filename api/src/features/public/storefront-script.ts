@@ -1,16 +1,23 @@
 import { DEFAULT_TRACKING_PAGE_HANDLE } from "@features/storefront/tracking-page.constants";
+import {
+  buildTrackingWidgetMarkup,
+  TN_POSTA_TRACKING_STYLES,
+} from "@features/public/tracking-widget-styles";
 
 export const PUBLIC_STOREFRONT_SCRIPT_PATH = "/embed/storefront.js";
-
-const TRACKING_IFRAME_HEIGHT = 520;
 
 export const buildStorefrontTrackingScript = (
   appOrigin: string,
   pageHandle = DEFAULT_TRACKING_PAGE_HANDLE
-): string => `(() => {
+): string => {
+  const action = `${appOrigin.replace(/\/$/, "")}/consulta-envio`;
+  const widgetMarkup = buildTrackingWidgetMarkup(action);
+
+  return `(() => {
   const APP = ${JSON.stringify(appOrigin)};
   const HANDLE = ${JSON.stringify(pageHandle)};
-  const IFRAME_HEIGHT = ${TRACKING_IFRAME_HEIGHT};
+  const CSS = ${JSON.stringify(TN_POSTA_TRACKING_STYLES)};
+  const WIDGET = ${JSON.stringify(widgetMarkup)};
   const LS = window.LS;
 
   if (!LS || !LS.store || !LS.store.id) return;
@@ -25,23 +32,73 @@ export const buildStorefrontTrackingScript = (
 
   if (!mount) return;
 
-  const renderIframe = (src) => {
-    mount.innerHTML =
-      '<iframe src="' +
-      src +
-      '" title="Seguimiento de envio" width="100%" height="' +
-      IFRAME_HEIGHT +
-      '" style="width:100%;max-width:560px;height:' +
-      IFRAME_HEIGHT +
-      'px;border:0;border-radius:14px;background:transparent" loading="lazy"></iframe>';
+  const ensureStyles = () => {
+    if (!mount.querySelector("style")) {
+      const style = document.createElement("style");
+      style.textContent = CSS;
+      mount.insertBefore(style, mount.firstChild);
+    }
   };
 
   const renderDisabled = () => {
     mount.innerHTML =
-      '<div style="max-width:560px;margin:0 auto;font-family:system-ui,-apple-system,sans-serif">' +
-      '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:28px 24px;text-align:center;font-size:15px;color:#6b7280">' +
-      "La consulta de seguimiento no esta disponible en este momento." +
-      "</div></div>";
+      '<style>' + CSS + '</style>' +
+      '<div class="tp-card"><p class="tp-disabled">La consulta de seguimiento no esta disponible en este momento.</p></div>';
+  };
+
+  const wireForm = (api) => {
+    const form = mount.querySelector("#tp-form");
+    const input = mount.querySelector("#tn-posta-code") || mount.querySelector("#tp-code");
+    const out = mount.querySelector(".tp-out");
+    const btn = form && form.querySelector(".tp-btn");
+
+    if (!form || !input) return;
+
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const code = String(input.value || "").trim().toUpperCase();
+      if (!code) return;
+      if (btn) btn.disabled = true;
+      if (out) out.innerHTML = "";
+
+      const fmt = (iso) => {
+        if (!iso) return "";
+        try {
+          return new Date(iso).toLocaleString("es-AR", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" });
+        } catch { return ""; }
+      };
+
+      try {
+        const res = await fetch(api + "?code=" + encodeURIComponent(code));
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          if (out) {
+            out.innerHTML = '<div class="tp-alert">' + (data.message || "No pudimos consultar el seguimiento. Intenta de nuevo en unos minutos.") + '</div>';
+          }
+          return;
+        }
+
+        if (out) {
+          const events = (data.events || []).map((e) =>
+            '<li class="' + (e.done ? "done" : "") + '">' + e.label +
+            (e.at ? '<span class="tp-date">' + fmt(e.at) + '</span>' : "") + '</li>'
+          ).join("");
+          out.innerHTML =
+            '<div class="tp-result">' +
+            '<div style="text-align:center"><span class="tp-status">' + (data.statusLabel || "") + '</span>' +
+            '<div class="tp-code">' + (data.trackingCode || "") + '</div></div>' +
+            '<div class="tp-meta"><p>Pedido <strong>#' + (data.orderNumber || "") + '</strong></p>' +
+            '<p>Destino <strong>' + (data.destinationCity || "") + '</strong></p></div>' +
+            '<ol class="tp-timeline">' + events + '</ol></div>';
+        }
+      } catch {
+        if (out) {
+          out.innerHTML = '<div class="tp-alert">No pudimos consultar el seguimiento. Intenta de nuevo en unos minutos.</div>';
+        }
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    });
   };
 
   fetch(APP + "/api/public/tienda/" + encodeURIComponent(String(LS.store.id)) + "/seguimiento")
@@ -52,18 +109,14 @@ export const buildStorefrontTrackingScript = (
         return;
       }
 
-      const pageUrl = cfg.pageUrl || APP + "/consulta-envio";
-      const iframeSrc = pageUrl + (pageUrl.indexOf("?") >= 0 ? "&" : "?") + "embed=1";
-      const existingFrame = mount.querySelector("iframe");
+      ensureStyles();
 
-      if (existingFrame) {
-        if (!existingFrame.getAttribute("src")) {
-          existingFrame.setAttribute("src", iframeSrc);
-        }
-        return;
+      if (!mount.querySelector("#tp-form")) {
+        mount.insertAdjacentHTML("beforeend", WIDGET);
       }
 
-      renderIframe(iframeSrc);
+      wireForm(cfg.apiUrl || APP + "/api/public/envio");
     })
     .catch(() => {});
 })();`;
+};
