@@ -1,7 +1,7 @@
 import { DEFAULT_TRACKING_PAGE_HANDLE } from "@features/storefront/tracking-page.constants";
 import {
   buildTrackingWidgetMarkup,
-  TN_POSTA_TRACKING_STYLES,
+  TN_POSTA_FULL_STYLES,
 } from "@features/public/tracking-widget-styles";
 
 export const PUBLIC_STOREFRONT_SCRIPT_PATH = "/embed/storefront.js";
@@ -16,7 +16,7 @@ export const buildStorefrontTrackingScript = (
   return `(() => {
   const APP = ${JSON.stringify(appOrigin)};
   const HANDLE = ${JSON.stringify(pageHandle)};
-  const CSS = ${JSON.stringify(TN_POSTA_TRACKING_STYLES)};
+  const CSS = ${JSON.stringify(TN_POSTA_FULL_STYLES)};
   const WIDGET = ${JSON.stringify(widgetMarkup)};
   const LS = window.LS;
 

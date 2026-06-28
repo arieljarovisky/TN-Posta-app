@@ -1,3 +1,14 @@
+/** Anula CSS del tema Lupo sobre .user-content .col-md-8 (p/b/strong con cajas). */
+export const TN_POSTA_THEME_OVERRIDES = `
+.user-content .col-md-8 #tn-posta-envio{background:transparent!important;border:none!important;border-radius:0!important;box-shadow:none!important;padding:0!important;margin:24px auto!important;max-width:520px!important}
+.user-content .col-md-8 #tn-posta-envio p{background:transparent!important;border:none!important;border-radius:0!important;padding:0!important;margin:0!important;font-size:inherit!important;color:inherit!important;line-height:inherit!important}
+.user-content .col-md-8 #tn-posta-envio p::before,.user-content .col-md-8 #tn-posta-envio li::before{content:none!important;display:none!important}
+.user-content .col-md-8 #tn-posta-envio strong,.user-content .col-md-8 #tn-posta-envio b{display:inline!important;background:transparent!important;border:none!important;border-radius:0!important;padding:0!important;margin:0!important;font-size:inherit!important;font-weight:700!important;color:inherit!important;line-height:inherit!important}
+.user-content .col-md-8 #tn-posta-envio a{background:inherit!important;border:none!important;border-radius:inherit!important}
+.user-content .col-md-8 #tn-posta-envio ul,.user-content .col-md-8 #tn-posta-envio li{list-style:none!important;padding:0!important;margin:0!important}
+.user-content .col-md-8 #tn-posta-envio img{width:auto!important;height:auto!important;border:none!important;box-shadow:none!important;padding:0!important;margin:0!important}
+`.trim();
+
 /** CSS scoped bajo #tn-posta-envio (inyectado por JS en la tienda). */
 export const TN_POSTA_TRACKING_STYLES = `
 #tn-posta-envio{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#111827;max-width:520px;margin:24px auto}
@@ -23,6 +34,8 @@ export const TN_POSTA_TRACKING_STYLES = `
 #tn-posta-envio .tp-disabled{text-align:center;font-size:15px;line-height:1.55;color:#6b7280;padding:8px 0}
 `.trim();
 
+export const TN_POSTA_FULL_STYLES = `${TN_POSTA_THEME_OVERRIDES}\n${TN_POSTA_TRACKING_STYLES}`;
+
 export const buildTrackingWidgetMarkup = (actionUrl: string): string => `
 <div class="tp-card">
   <p class="tp-intro">Ingres&aacute; tu c&oacute;digo de seguimiento TPA para conocer el estado de tu env&iacute;o.</p>
@@ -45,8 +58,11 @@ export const buildTrackingPageFallbackContent = (
 ): string => {
   const href = appOrigin ? `${appOrigin}${pagePath}` : pagePath;
 
-  return `<div id="tn-posta-envio" style="max-width:520px;margin:24px auto;font-family:system-ui,-apple-system,sans-serif;color:#111827"><div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 8px 28px rgba(17,24,39,.06);padding:28px 24px;text-align:center"><p style="margin:0 0 20px;font-size:15px;line-height:1.55;color:#374151">Ingres&aacute; tu c&oacute;digo de seguimiento TPA para conocer el estado de tu env&iacute;o.</p><a href="${href}" style="display:block;padding:16px;background:#111827;color:#fff;text-decoration:none;border-radius:10px;font-size:13px;font-weight:800;letter-spacing:.12em;text-transform:uppercase">Consultar env&iacute;o</a><p style="margin:14px 0 0;font-size:13px;line-height:1.45;color:#6b7280">El c&oacute;digo figura en el mail de confirmaci&oacute;n de env&iacute;o.</p></div></div>`;
+  return `<style>${TN_POSTA_FULL_STYLES}</style><div id="tn-posta-envio"><div class="tp-card"><p class="tp-intro">Ingres&aacute; tu c&oacute;digo de seguimiento TPA para conocer el estado de tu env&iacute;o.</p><a class="tp-btn" href="${href}">Consultar env&iacute;o</a><p class="tp-hint">El c&oacute;digo figura en el mail de confirmaci&oacute;n de env&iacute;o.</p></div></div>`;
 };
 
 export const buildTrackingPageDisabledContent = (): string =>
-  `<div id="tn-posta-envio" style="max-width:520px;margin:24px auto;font-family:system-ui,-apple-system,sans-serif"><div style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:28px 24px;text-align:center;font-size:15px;line-height:1.55;color:#6b7280">La consulta de seguimiento no est&aacute; disponible en este momento. Contact&aacute; a la tienda si necesit&aacute;s ayuda.</div></div>`;
+  `<style>${TN_POSTA_FULL_STYLES}</style><div id="tn-posta-envio"><div class="tp-card"><p class="tp-disabled">La consulta de seguimiento no est&aacute; disponible en este momento. Contact&aacute; a la tienda si necesit&aacute;s ayuda.</p></div></div>`;
+
+/** CSS para pegar al final del CSS custom del tema (si &lt;style&gt; en pagina no persiste). */
+export const getTrackingThemeCssSnippet = (): string => TN_POSTA_FULL_STYLES;

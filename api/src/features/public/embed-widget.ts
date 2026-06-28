@@ -1,7 +1,7 @@
 import {
   buildTrackingPageFallbackContent,
   buildTrackingWidgetMarkup,
-  TN_POSTA_TRACKING_STYLES,
+  TN_POSTA_FULL_STYLES,
 } from "@features/public/tracking-widget-styles";
 
 export const PUBLIC_EMBED_SCRIPT_PATH = "/embed/envio.js";
@@ -9,10 +9,12 @@ export const PUBLIC_EMBED_SCRIPT_PATH = "/embed/envio.js";
 export const PUBLIC_ENVIO_API_PATH = "/api/public/envio";
 
 export {
+  TN_POSTA_FULL_STYLES,
   TN_POSTA_TRACKING_STYLES,
   buildTrackingWidgetMarkup,
   buildTrackingPageFallbackContent,
-};
+  getTrackingThemeCssSnippet,
+} from "@features/public/tracking-widget-styles";
 
 /** HTML publicado en Tiendanube: enlace estilizado que siempre funciona. El script de storefront reemplaza esto con el formulario. */
 export const buildTrackingPageApiContent = (
@@ -43,7 +45,7 @@ export const buildEmbedScript = (appOrigin: string): string => {
   const mount = document.getElementById("tn-posta-envio");
   if (!mount) return;
 
-  const css = ${JSON.stringify(TN_POSTA_TRACKING_STYLES)};
+  const css = ${JSON.stringify(TN_POSTA_FULL_STYLES)};
 
   mount.innerHTML = "<style>" + css + "</style>" + ${JSON.stringify(widgetMarkup)};
 
