@@ -148,14 +148,22 @@ class SettingsService {
       data.tracking_page_title !== undefined;
 
     if (hasCredentials && trackingPageChanged) {
-      const syncResult = await TrackingPageSyncService.syncTrackingPage(storeId, {
-        enabled: settings.tracking_page_enabled ?? false,
-        title: settings.tracking_page_title ?? "Seguimiento de envio",
-        existingPageId: settings.tracking_page_id,
-      });
+      try {
+        const syncResult = await TrackingPageSyncService.syncTrackingPage(storeId, {
+          enabled: settings.tracking_page_enabled ?? false,
+          title: settings.tracking_page_title ?? "Seguimiento de envio",
+          existingPageId: settings.tracking_page_id,
+        });
 
-      tracking_page_sync_message = syncResult.message;
-      tracking_page_sync_ok = syncResult.ok;
+        tracking_page_sync_message = syncResult.message;
+        tracking_page_sync_ok = syncResult.ok;
+      } catch (error) {
+        tracking_page_sync_message =
+          error instanceof Error
+            ? error.message
+            : "No pudimos publicar la pagina en Tiendanube.";
+        tracking_page_sync_ok = false;
+      }
     }
 
     if (hasCredentials && (data.shipping_rates || data.carrier_name || data.enabled)) {

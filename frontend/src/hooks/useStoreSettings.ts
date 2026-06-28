@@ -7,6 +7,9 @@ import {
 import { ShippingRateRule, ZoneLocalitiesMap } from "@/types/shipping";
 import { SenderConfig } from "@/services/settings.api";
 
+const normalizeShippingRates = (value: unknown): ShippingRateRule[] =>
+  Array.isArray(value) ? (value as ShippingRateRule[]) : [];
+
 export const useStoreSettings = () => {
   const [enabled, setEnabled] = useState(false);
   const [connected, setConnected] = useState(true);
@@ -40,7 +43,7 @@ export const useStoreSettings = () => {
       setConnected(data.connected);
       setCarrierName(data.carrier_name ?? "TN Posta");
       setCarrierId(data.carrier_id ?? null);
-      setShippingRates(data.shipping_rates ?? []);
+      setShippingRates(normalizeShippingRates(data.shipping_rates));
       setZoneLocalities(data.zone_localities ?? {});
       setSender(data.sender ?? { business_name: data.carrier_name ?? "TN Posta" });
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
@@ -76,7 +79,7 @@ export const useStoreSettings = () => {
       setConnected(data.connected);
       setCarrierName(data.carrier_name ?? carrierName);
       setCarrierId(data.carrier_id ?? null);
-      setShippingRates(data.shipping_rates ?? []);
+      setShippingRates(normalizeShippingRates(data.shipping_rates));
       setZoneLocalities(data.zone_localities ?? {});
       setSender(data.sender ?? { business_name: data.carrier_name ?? "TN Posta" });
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
@@ -107,7 +110,7 @@ export const useStoreSettings = () => {
       const data = await updateStoreSettings(payload);
       setCarrierName(data.carrier_name ?? payload.carrier_name);
       setCarrierId(data.carrier_id ?? null);
-      setShippingRates(data.shipping_rates ?? []);
+      setShippingRates(normalizeShippingRates(data.shipping_rates));
       setZoneLocalities(data.zone_localities ?? {});
       setSender(data.sender ?? { business_name: data.carrier_name ?? "TN Posta" });
       setTrackingPageEnabled(data.tracking_page_enabled ?? false);
@@ -187,8 +190,20 @@ export const useStoreSettings = () => {
         syncMessage: data.tracking_page_sync_message,
         syncOk: data.tracking_page_sync_ok,
       };
-    } catch {
-      return { success: false };
+    } catch (error) {
+      const message =
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as { response?: { data?: { description?: string } } })
+          .response?.data?.description === "string"
+          ? (error as { response?: { data?: { description?: string } } }).response
+              ?.data?.description
+          : error instanceof Error
+            ? error.message
+            : undefined;
+
+      return { success: false, syncMessage: message };
     } finally {
       setSaving(false);
     }

@@ -43,7 +43,7 @@ const pageHandlesMatch = (page: TiendanubePage, handle: string): boolean =>
     (value) => value?.toLowerCase() === handle.toLowerCase()
   );
 
-const resolveLanguageKeys = (
+const collectLanguageKeys = (
   store: TiendanubeStore,
   existingPage?: TiendanubePage
 ): string[] => {
@@ -57,11 +57,17 @@ const resolveLanguageKeys = (
     Object.keys(field ?? {}).forEach((language) => keys.add(language));
   }
 
-  if (store.main_language?.trim()) {
+  if (typeof store.main_language === "string" && store.main_language.trim()) {
     keys.add(store.main_language.trim());
   }
 
-  store.languages?.filter(Boolean).forEach((language) => keys.add(language));
+  if (Array.isArray(store.languages)) {
+    store.languages
+      .filter((language): language is string => typeof language === "string")
+      .forEach((language) => keys.add(language.trim()));
+  } else if (store.languages && typeof store.languages === "object") {
+    Object.keys(store.languages).forEach((language) => keys.add(language));
+  }
 
   if (keys.size === 0) {
     keys.add(store.country === "AR" ? "es_AR" : "es");
@@ -300,7 +306,7 @@ class TrackingPageSyncService {
 
       existing ??= await this.findPageByHandle(storeId, handle);
 
-      const languageKeys = resolveLanguageKeys(store, existing);
+      const languageKeys = collectLanguageKeys(store, existing);
       let pageId = existing?.id;
       let scriptMessage: string | undefined;
 

@@ -28,7 +28,7 @@ const buildSettingsResponse = (
   shipping_option_names: data.shipping_option_names ?? [],
   carrier_id: data.carrier_id ?? null,
   carrier_name: data.carrier_name ?? "TN Posta",
-  shipping_rates: data.shipping_rates ?? [],
+  shipping_rates: Array.isArray(data.shipping_rates) ? data.shipping_rates : [],
   zone_localities: getAllZoneCoverage(data.zone_localities).reduce(
     (acc, zone) => {
       acc[zone.zone] = zone.localities;

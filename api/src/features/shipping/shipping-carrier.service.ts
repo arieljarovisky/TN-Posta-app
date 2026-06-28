@@ -26,8 +26,9 @@ export const normalizeShippingRates = (
   rates: ShippingRateRule[] | undefined
 ): ShippingRateRule[] => {
   const usedCodes = new Set<string>();
+  const source = Array.isArray(rates) ? rates : [];
 
-  return (rates ?? []).map((rate, index) => {
+  return source.map((rate, index) => {
     const id = rate.id || randomUUID();
     const baseCode = slugifyCode(rate.code || `${rate.zone}_${rate.name}`) || `rate_${index + 1}`;
     let code = baseCode;

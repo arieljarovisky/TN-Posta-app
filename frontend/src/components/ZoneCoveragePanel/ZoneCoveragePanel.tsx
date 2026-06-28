@@ -218,10 +218,16 @@ const ZoneCoveragePanel = ({
     highlightZones[0] ?? null
   );
 
-  const getLocalitiesForZone = (zone: ShippingRateZone): string[] =>
-    zoneLocalities[zone] ??
-    zones.find((entry) => entry.zone === zone)?.localities ??
-    [];
+  const getLocalitiesForZone = (zone: ShippingRateZone): string[] => {
+    const custom = zoneLocalities[zone];
+    const fromZone = zones.find((entry) => entry.zone === zone)?.localities;
+
+    if (Array.isArray(custom) && custom.length) {
+      return custom;
+    }
+
+    return Array.isArray(fromZone) ? fromZone : [];
+  };
 
   const handleZoneLocalitiesChange = (
     zone: ShippingRateZone,

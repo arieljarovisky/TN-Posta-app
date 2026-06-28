@@ -77,7 +77,7 @@ const Home = () => {
 
   useEffect(() => {
     setCarrierNameInput(carrierName);
-    setRatesInput(shippingRates);
+    setRatesInput(Array.isArray(shippingRates) ? shippingRates : []);
   }, [carrierName, shippingRates]);
 
   useEffect(() => {
@@ -152,7 +152,9 @@ const Home = () => {
   }, []);
 
   const handleSaveShippingConfig = async () => {
-    const validRates = ratesInput.filter((rate) => rate.name.trim());
+    const validRates = (Array.isArray(ratesInput) ? ratesInput : []).filter(
+      (rate) => rate.name.trim()
+    );
 
     if (validRates.length === 0) {
       addToast({
@@ -243,8 +245,8 @@ const Home = () => {
     addToast({
       id: crypto.randomUUID(),
       type: "danger",
-      text: t("errors.generic"),
-      duration: 4000,
+      text: result.syncMessage ?? t("errors.generic"),
+      duration: 8000,
     });
   };
 
@@ -560,7 +562,7 @@ const Home = () => {
                     zones={zoneCoverage}
                     loading={zoneCoverageLoading}
                     error={zoneCoverageError}
-                    highlightZones={ratesInput
+                    highlightZones={(Array.isArray(ratesInput) ? ratesInput : [])
                       .filter((rate) => rate.active)
                       .map((rate) => rate.zone)}
                     editable
