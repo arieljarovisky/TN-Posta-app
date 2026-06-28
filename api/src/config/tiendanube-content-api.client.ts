@@ -12,6 +12,18 @@ const formatTiendanubeApiMessage = (value: unknown): string => {
     return value;
   }
 
+  if (typeof value === "object" && value !== null) {
+    return Object.entries(value as Record<string, unknown>)
+      .flatMap(([key, entry]) => {
+        if (Array.isArray(entry)) {
+          return entry.map((item) => `${key}: ${String(item)}`);
+        }
+
+        return [`${key}: ${String(entry)}`];
+      })
+      .join(" ");
+  }
+
   if (value == null) {
     return "Error de API";
   }
@@ -71,8 +83,9 @@ tiendanubeContentApiClient.interceptors.response.use(
     if (error.isAxiosError) {
       const { data, status } = error.response ?? {};
       const payload = new HttpErrorException(
-        "TiendanubeContentApiClient - " + formatTiendanubeApiMessage(data),
-        formatTiendanubeApiMessage(data?.description ?? data?.error)
+        "TiendanubeContentApiClient - " +
+          formatTiendanubeApiMessage(data?.message ?? data),
+        formatTiendanubeApiMessage(data?.description ?? data?.error ?? data)
       );
       payload.setStatusCode(data?.code ?? status ?? 500);
       return Promise.reject(payload);

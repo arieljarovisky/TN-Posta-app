@@ -68,7 +68,7 @@ const resolveLanguageKeys = (
   return ["es"];
 };
 
-const buildCreatePayload = (
+const buildPagePayload = (
   languageKeys: string[],
   title: string,
   content: string,
@@ -94,33 +94,29 @@ const buildCreatePayload = (
   };
 };
 
-const buildUpdatePayload = (
+const buildLegacyUpdatePayload = (
   languageKeys: string[],
   title: string,
-  content: string,
-  seoHandle: string
+  content: string
 ) => {
-  const name: Record<string, string> = {};
-  const pageContent: Record<string, string> = {};
-  const handle: Record<string, string> = {};
-  const seo_title: Record<string, string> = {};
-  const seo_description: Record<string, string> = {};
+  if (languageKeys.length === 1) {
+    return {
+      title,
+      content,
+    };
+  }
+
+  const titleByLanguage: Record<string, string> = {};
+  const contentByLanguage: Record<string, string> = {};
 
   for (const language of languageKeys) {
-    name[language] = title;
-    pageContent[language] = content;
-    handle[language] = seoHandle;
-    seo_title[language] = title;
-    seo_description[language] = "Consulta el estado de tu envio con tu codigo TPA.";
+    titleByLanguage[language] = title;
+    contentByLanguage[language] = content;
   }
 
   return {
-    published: true,
-    name,
-    content: pageContent,
-    handle,
-    seo_title,
-    seo_description,
+    title: titleByLanguage,
+    content: contentByLanguage,
   };
 };
 
@@ -165,6 +161,18 @@ const formatApiErrorText = (value: unknown): string => {
 
   if (typeof value === "string") {
     return value;
+  }
+
+  if (typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>)
+      .flatMap(([key, entry]) => {
+        if (Array.isArray(entry)) {
+          return entry.map((item) => `${key}: ${String(item)}`);
+        }
+
+        return [`${key}: ${String(entry)}`];
+      })
+      .join(" ");
   }
 
   if (value == null) {
@@ -253,6 +261,35 @@ class TrackingPageSyncService {
     return "Script de seguimiento desactivado en la tienda.";
   }
 
+  private async updatePage(
+    storeId: number,
+    pageId: number,
+    languageKeys: string[],
+    title: string,
+    content: string,
+    seoHandle: string
+  ): Promise<void> {
+    try {
+      await tiendanubeContentApiClient.put(
+        `${storeId}/pages/${pageId}`,
+        buildPagePayload(languageKeys, title, content, seoHandle)
+      );
+      return;
+    } catch (error) {
+      const status =
+        error instanceof HttpErrorException ? Number(error.statusCode) : undefined;
+
+      if (status !== 400 && status !== 422) {
+        throw error;
+      }
+    }
+
+    await tiendanubeContentApiClient.put(
+      `${storeId}/pages/${pageId}`,
+      buildLegacyUpdatePayload(languageKeys, title, content)
+    );
+  }
+
   async syncTrackingPage(
     storeId: number,
     options: {
@@ -294,10 +331,7 @@ class TrackingPageSyncService {
       let scriptMessage: string | undefined;
 
       if (pageId) {
-        await tiendanubeContentApiClient.put(
-          `${storeId}/pages/${pageId}`,
-          buildUpdatePayload(languageKeys, title, content, handle)
-        );
+        await this.updatePage(storeId, pageId, languageKeys, title, content, handle);
 
         logInfo("tracking-page-sync", "Pagina de seguimiento actualizada", {
           storeId,
@@ -309,7 +343,7 @@ class TrackingPageSyncService {
       } else if (options.enabled) {
         const created = (await tiendanubeContentApiClient.post(
           `${storeId}/pages`,
-          buildCreatePayload(languageKeys, title, content, handle)
+          buildPagePayload(languageKeys, title, content, handle)
         )) as TiendanubePage;
 
         pageId = created.id;
