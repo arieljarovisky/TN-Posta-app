@@ -45,7 +45,11 @@ class SettingsRepository {
     storeId: number,
     data: Pick<
       StoreSettings,
-      "enabled" | "shipping_option_names" | "carrier_name" | "shipping_rates"
+      | "enabled"
+      | "shipping_option_names"
+      | "carrier_name"
+      | "shipping_rates"
+      | "zone_localities"
     >
   ): StoreSettings {
     const existing = this.getByStoreId(storeId);
@@ -56,6 +60,7 @@ class SettingsRepository {
       shipping_option_names: data.shipping_option_names ?? existing.shipping_option_names ?? [],
       carrier_name: data.carrier_name ?? existing.carrier_name ?? DEFAULT_CARRIER_NAME,
       shipping_rates: data.shipping_rates ?? existing.shipping_rates ?? [],
+      zone_localities: data.zone_localities ?? existing.zone_localities,
       updated_at: new Date().toISOString(),
     };
 

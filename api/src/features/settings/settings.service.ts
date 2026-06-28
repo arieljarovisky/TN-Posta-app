@@ -6,6 +6,10 @@ import {
 import { StoreSettings } from "@features/settings/interfaces/store-settings.interface";
 import { ShippingRateRule } from "@features/shipping/interfaces/shipping.interfaces";
 import { BadRequestException } from "@utils";
+import {
+  normalizeZoneLocalitiesMap,
+  ZoneLocalitiesMap,
+} from "@utils/zone/zone-coverage";
 
 const DEFAULT_RATES: ShippingRateRule[] = [
   {
@@ -46,6 +50,7 @@ class SettingsService {
       shipping_option_names?: string[];
       carrier_name?: string;
       shipping_rates?: ShippingRateRule[];
+      zone_localities?: ZoneLocalitiesMap;
     }
   ): Promise<{ settings: StoreSettings; shipping_sync_message?: string }> {
     const current = settingsRepository.getByStoreId(storeId);
@@ -84,11 +89,27 @@ class SettingsService {
       ),
     ];
 
+    const normalizedZoneLocalities = data.zone_localities
+      ? normalizeZoneLocalitiesMap(data.zone_localities)
+      : current.zone_localities;
+
+    if (data.zone_localities) {
+      for (const [zone, localities] of Object.entries(normalizedZoneLocalities ?? {})) {
+        if (!localities?.length) {
+          throw new BadRequestException(
+            "Cobertura invalida",
+            `La zona ${zone} debe tener al menos un barrio o localidad.`
+          );
+        }
+      }
+    }
+
     const settings = settingsRepository.updateStoreSettings(storeId, {
       enabled: data.enabled ?? current.enabled,
       shipping_option_names: shippingOptionNames,
       carrier_name: data.carrier_name ?? current.carrier_name,
       shipping_rates: normalizedRates,
+      zone_localities: normalizedZoneLocalities,
     });
 
     let shipping_sync_message: string | undefined;

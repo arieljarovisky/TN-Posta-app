@@ -4,6 +4,8 @@ export type ShippingRateZone =
   | "gba_extended"
   | "gba_all";
 
+export type ZoneLocalitiesMap = Partial<Record<ShippingRateZone, string[]>>;
+
 export interface ShippingRateRule {
   id: string;
   code: string;

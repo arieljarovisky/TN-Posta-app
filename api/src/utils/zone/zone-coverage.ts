@@ -9,6 +9,8 @@ export interface ZoneCoverageInfo {
   localities: string[];
 }
 
+export type ZoneLocalitiesMap = Partial<Record<ShippingRateZone, string[]>>;
+
 const normalize = (value: string): string =>
   value
     .trim()
@@ -75,6 +77,44 @@ const dedupeLocalities = (values: string[]): string[] => {
   return result.sort((a, b) => a.localeCompare(b, "es"));
 };
 
+export const normalizeLocalityName = (value: string): string =>
+  toDisplayName(value.trim());
+
+export const normalizeZoneLocalitiesMap = (
+  input?: ZoneLocalitiesMap
+): ZoneLocalitiesMap => {
+  if (!input) {
+    return {};
+  }
+
+  const zones: ShippingRateZone[] = [
+    "caba",
+    "gba_near",
+    "gba_extended",
+    "gba_all",
+  ];
+
+  const result: ZoneLocalitiesMap = {};
+
+  for (const zone of zones) {
+    const values = input[zone];
+
+    if (!values?.length) {
+      continue;
+    }
+
+    const normalized = dedupeLocalities(
+      values.map((value) => String(value).trim()).filter(Boolean)
+    );
+
+    if (normalized.length > 0) {
+      result[zone] = normalized;
+    }
+  }
+
+  return result;
+};
+
 export const CABA_BARRIOS = dedupeLocalities([
   "Agronomía",
   "Almagro",
@@ -128,38 +168,73 @@ export const CABA_BARRIOS = dedupeLocalities([
 const buildGbaAllLocalities = (): string[] =>
   dedupeLocalities([...GBA_LOCALITIES, ...GBA_NEAR_LOCALITIES, ...GBA_EXTENDED_LOCALITIES]);
 
+export const DEFAULT_ZONE_LOCALITIES: Record<ShippingRateZone, string[]> = {
+  caba: CABA_BARRIOS,
+  gba_near: dedupeLocalities(GBA_NEAR_LOCALITIES),
+  gba_extended: dedupeLocalities(GBA_EXTENDED_LOCALITIES),
+  gba_all: buildGbaAllLocalities(),
+};
+
+export const resolveZoneLocalities = (
+  zone: ShippingRateZone,
+  overrides?: ZoneLocalitiesMap
+): string[] => {
+  const custom = overrides?.[zone];
+
+  if (custom?.length) {
+    return dedupeLocalities(custom);
+  }
+
+  return DEFAULT_ZONE_LOCALITIES[zone];
+};
+
 export const ZONE_COVERAGE: ZoneCoverageInfo[] = [
   {
     zone: "caba",
     label: "Capital Federal (CABA)",
     description: "Todos los barrios de la Ciudad Autónoma de Buenos Aires.",
     postal_codes: "CP 1000 - 1599",
-    localities: CABA_BARRIOS,
+    localities: DEFAULT_ZONE_LOCALITIES.caba,
   },
   {
     zone: "gba_near",
     label: "GBA - zonas cercanas",
     description: "Partidos del conurbano sur y cercano.",
     postal_codes: "CP 1600 - 1999 (segun localidad)",
-    localities: dedupeLocalities(GBA_NEAR_LOCALITIES),
+    localities: DEFAULT_ZONE_LOCALITIES.gba_near,
   },
   {
     zone: "gba_extended",
     label: "GBA - zonas extendidas",
     description: "Partidos del conurbano norte y oeste medio.",
     postal_codes: "CP 1600 - 1999 (segun localidad)",
-    localities: dedupeLocalities(GBA_EXTENDED_LOCALITIES),
+    localities: DEFAULT_ZONE_LOCALITIES.gba_extended,
   },
   {
     zone: "gba_all",
     label: "Gran Buenos Aires (todo GBA)",
     description: "Todos los partidos configurados en TN Posta dentro de Provincia de Buenos Aires.",
     postal_codes: "CP 1600 - 1999",
-    localities: buildGbaAllLocalities(),
+    localities: DEFAULT_ZONE_LOCALITIES.gba_all,
   },
 ];
 
-export const getZoneCoverage = (zone: ShippingRateZone): ZoneCoverageInfo =>
-  ZONE_COVERAGE.find((entry) => entry.zone === zone) ?? ZONE_COVERAGE[0];
+export const getZoneCoverage = (
+  zone: ShippingRateZone,
+  overrides?: ZoneLocalitiesMap
+): ZoneCoverageInfo => {
+  const base = ZONE_COVERAGE.find((entry) => entry.zone === zone) ?? ZONE_COVERAGE[0];
 
-export const getAllZoneCoverage = (): ZoneCoverageInfo[] => ZONE_COVERAGE;
+  return {
+    ...base,
+    localities: resolveZoneLocalities(zone, overrides),
+  };
+};
+
+export const getAllZoneCoverage = (
+  overrides?: ZoneLocalitiesMap
+): ZoneCoverageInfo[] =>
+  ZONE_COVERAGE.map((entry) => ({
+    ...entry,
+    localities: resolveZoneLocalities(entry.zone, overrides),
+  }));

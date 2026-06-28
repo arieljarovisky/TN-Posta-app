@@ -5,6 +5,7 @@ import { UpdateStoreSettingsRequest } from "@features/settings/interfaces/store-
 import { ShippingRateRule } from "@features/shipping/interfaces/shipping.interfaces";
 import { userRepository } from "@repository";
 import { BadRequestException, StatusCode } from "@utils";
+import { getAllZoneCoverage } from "@utils/zone/zone-coverage";
 
 const DEFAULT_RATES: ShippingRateRule[] = [
   {
@@ -58,6 +59,13 @@ class SettingsController {
         carrier_name: data.carrier_name ?? "TN Posta",
         shipping_rates:
           data.shipping_rates?.length ? data.shipping_rates : DEFAULT_RATES,
+        zone_localities: getAllZoneCoverage(data.zone_localities).reduce(
+          (acc, zone) => {
+            acc[zone.zone] = zone.localities;
+            return acc;
+          },
+          {} as Record<string, string[]>
+        ),
         updated_at: data.updated_at,
       });
     } catch (error) {
@@ -104,6 +112,18 @@ class SettingsController {
         );
       }
 
+      if (
+        payload.zone_localities !== undefined &&
+        (typeof payload.zone_localities !== "object" ||
+          payload.zone_localities === null ||
+          Array.isArray(payload.zone_localities))
+      ) {
+        throw new BadRequestException(
+          "Invalid payload",
+          "zone_localities debe ser un objeto con listas de barrios por zona"
+        );
+      }
+
       const { settings, shipping_sync_message } =
         await SettingsService.updateStoreSettings(+req.user.user_id, {
           enabled: payload.enabled,
@@ -112,6 +132,7 @@ class SettingsController {
           ),
           carrier_name: payload.carrier_name?.trim(),
           shipping_rates: payload.shipping_rates,
+          zone_localities: payload.zone_localities,
         });
       const connected = Boolean(
         userRepository.findOptional(+req.user.user_id)?.access_token
@@ -124,6 +145,13 @@ class SettingsController {
         carrier_id: settings.carrier_id ?? null,
         carrier_name: settings.carrier_name ?? "TN Posta",
         shipping_rates: settings.shipping_rates ?? [],
+        zone_localities: getAllZoneCoverage(settings.zone_localities).reduce(
+          (acc, zone) => {
+            acc[zone.zone] = zone.localities;
+            return acc;
+          },
+          {} as Record<string, string[]>
+        ),
         shipping_sync_message,
         updated_at: settings.updated_at,
       });

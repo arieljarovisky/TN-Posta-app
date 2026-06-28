@@ -4,7 +4,7 @@ import {
   fetchStoreSettings,
   updateStoreSettings,
 } from "@/services/settings.api";
-import { ShippingRateRule } from "@/types/shipping";
+import { ShippingRateRule, ZoneLocalitiesMap } from "@/types/shipping";
 
 export const useStoreSettings = () => {
   const [enabled, setEnabled] = useState(false);
@@ -12,6 +12,7 @@ export const useStoreSettings = () => {
   const [carrierName, setCarrierName] = useState("TN Posta");
   const [carrierId, setCarrierId] = useState<number | null>(null);
   const [shippingRates, setShippingRates] = useState<ShippingRateRule[]>([]);
+  const [zoneLocalities, setZoneLocalities] = useState<ZoneLocalitiesMap>({});
   const [shippingOptionNames, setShippingOptionNames] = useState<string[]>([]);
   const [shippingSyncMessage, setShippingSyncMessage] = useState<string | null>(
     null
@@ -31,6 +32,7 @@ export const useStoreSettings = () => {
       setCarrierName(data.carrier_name ?? "TN Posta");
       setCarrierId(data.carrier_id ?? null);
       setShippingRates(data.shipping_rates ?? []);
+      setZoneLocalities(data.zone_localities ?? {});
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
     } catch {
@@ -58,6 +60,7 @@ export const useStoreSettings = () => {
       setCarrierName(data.carrier_name ?? carrierName);
       setCarrierId(data.carrier_id ?? null);
       setShippingRates(data.shipping_rates ?? []);
+      setZoneLocalities(data.zone_localities ?? {});
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
       setLoadError(null);
@@ -80,10 +83,26 @@ export const useStoreSettings = () => {
       setCarrierName(data.carrier_name ?? payload.carrier_name);
       setCarrierId(data.carrier_id ?? null);
       setShippingRates(data.shipping_rates ?? []);
+      setZoneLocalities(data.zone_localities ?? {});
       setShippingOptionNames(data.shipping_option_names ?? []);
       setShippingSyncMessage(data.shipping_sync_message ?? null);
       setLoadError(null);
       return { success: true, syncMessage: data.shipping_sync_message };
+    } catch {
+      return { success: false };
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveZoneLocalities = async (localities: ZoneLocalitiesMap) => {
+    setSaving(true);
+
+    try {
+      const data = await updateStoreSettings({ zone_localities: localities });
+      setZoneLocalities(data.zone_localities ?? {});
+      setLoadError(null);
+      return { success: true };
     } catch {
       return { success: false };
     } finally {
@@ -97,6 +116,7 @@ export const useStoreSettings = () => {
     carrierName,
     carrierId,
     shippingRates,
+    zoneLocalities,
     shippingOptionNames,
     shippingSyncMessage,
     loading,
@@ -104,6 +124,7 @@ export const useStoreSettings = () => {
     loadError,
     toggleEnabled,
     saveShippingConfig,
+    saveZoneLocalities,
     reloadSettings: loadSettings,
   };
 };

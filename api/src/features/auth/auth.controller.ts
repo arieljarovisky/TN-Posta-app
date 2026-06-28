@@ -35,11 +35,14 @@ class AuthenticationController {
 
       const credentials = await InstallAppService.install(code);
 
-      logInfo("auth/install", "Instalacion completada, redirigiendo al home", {
+      const adminUrl = getStoreAdminAppUrl();
+
+      logInfo("auth/install", "Instalacion completada, redirigiendo al admin", {
         storeId: credentials.user_id,
+        adminUrl: adminUrl ?? "/?installed=1",
       });
 
-      return res.redirect("/?installed=1");
+      return res.redirect(adminUrl ?? "/?installed=1");
     } catch (e) {
       logError("auth/install", "Instalacion fallida", e, {
         code: maskCode(code),

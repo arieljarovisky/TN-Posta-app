@@ -41,7 +41,10 @@ const resources = {
           "Consulta envios ya creados y descarga las etiquetas en PDF.",
         coverageTitle: "Cobertura por barrio",
         coverageBody:
-          "Consulta los barrios y partidos incluidos en cada zona de envio.",
+          "Agrega o quita barrios y partidos incluidos en cada zona de envio.",
+        coverageSaved: "Cobertura por barrio guardada correctamente.",
+        coverageEmptyZone:
+          "Cada zona debe tener al menos un barrio o partido.",
         reconnectTitle: "Tienda desconectada",
         reconnectBody:
           "Las credenciales OAuth se perdieron (suele pasar tras un redeploy). Reconecta la tienda para ver pedidos y crear envios.",

@@ -1,8 +1,19 @@
-import { useState } from "react";
-import { Box, Button, Spinner, Tag, Text } from "@nimbus-ds/components";
+import { FormEvent, useState } from "react";
+import {
+  Box,
+  Button,
+  IconButton,
+  Input,
+  Spinner,
+  Tag,
+  Text,
+} from "@nimbus-ds/components";
+import { PlusCircleIcon, TrashIcon } from "@nimbus-ds/icons";
 
 import { ZoneCoverageInfo } from "@/services/zones.api";
-import { ShippingRateZone } from "@/types/shipping";
+import { ShippingRateZone, ZoneLocalitiesMap } from "@/types/shipping";
+
+const normalizeLocality = (value: string): string => value.trim();
 
 type ZoneLocalitiesPreviewProps = {
   zone: ShippingRateZone;
@@ -73,11 +84,122 @@ export const ZoneLocalitiesPreview = ({
   );
 };
 
+type EditableZoneLocalitiesProps = {
+  zone: ShippingRateZone;
+  localities: string[];
+  disabled?: boolean;
+  onChange: (zone: ShippingRateZone, localities: string[]) => void;
+};
+
+const EditableZoneLocalities = ({
+  zone,
+  localities,
+  disabled = false,
+  onChange,
+}: EditableZoneLocalitiesProps) => {
+  const [newLocality, setNewLocality] = useState("");
+
+  const addLocality = () => {
+    const value = normalizeLocality(newLocality);
+
+    if (!value) {
+      return;
+    }
+
+    const exists = localities.some(
+      (item) => item.toLowerCase() === value.toLowerCase()
+    );
+
+    if (exists) {
+      setNewLocality("");
+      return;
+    }
+
+    onChange(zone, [...localities, value].sort((a, b) => a.localeCompare(b, "es")));
+    setNewLocality("");
+  };
+
+  const removeLocality = (locality: string) => {
+    onChange(
+      zone,
+      localities.filter((item) => item !== locality)
+    );
+  };
+
+  const handleSubmit = (event: FormEvent) => {
+    event.preventDefault();
+    addLocality();
+  };
+
+  return (
+    <Box display="flex" flexDirection="column" gap="2">
+      <Box display="flex" flexWrap="wrap" gap="1">
+        {localities.map((locality) => (
+          <Box
+            key={`${zone}-${locality}`}
+            display="inline-flex"
+            alignItems="center"
+            gap="1"
+          >
+            <Tag appearance="neutral">{locality}</Tag>
+            <IconButton
+              size="2rem"
+              source={<TrashIcon />}
+              disabled={disabled}
+              aria-label={`Quitar ${locality}`}
+              onClick={() => removeLocality(locality)}
+            />
+          </Box>
+        ))}
+        {localities.length === 0 && (
+          <Text fontSize="caption" color="neutral-textLow">
+            No hay barrios en esta zona. Agrega al menos uno.
+          </Text>
+        )}
+      </Box>
+
+      <Box
+        as="form"
+        display="flex"
+        flexWrap="wrap"
+        gap="2"
+        alignItems="flex-end"
+        onSubmit={handleSubmit}
+      >
+        <Box display="flex" flexDirection="column" gap="1" flex="1" minWidth="200px">
+          <Input
+            id={`locality-${zone}`}
+            name={`locality-${zone}`}
+            value={newLocality}
+            disabled={disabled}
+            placeholder="Nombre del barrio o partido"
+            onChange={(event) => setNewLocality(event.target.value)}
+          />
+        </Box>
+        <Button
+          type="submit"
+          appearance="neutral"
+          disabled={disabled || !normalizeLocality(newLocality)}
+        >
+          <PlusCircleIcon size="small" />
+          Agregar
+        </Button>
+      </Box>
+    </Box>
+  );
+};
+
 type ZoneCoveragePanelProps = {
   zones: ZoneCoverageInfo[];
   loading?: boolean;
   error?: string | null;
   highlightZones?: ShippingRateZone[];
+  editable?: boolean;
+  disabled?: boolean;
+  saving?: boolean;
+  zoneLocalities?: ZoneLocalitiesMap;
+  onLocalitiesChange?: (localities: ZoneLocalitiesMap) => void;
+  onSave?: () => void;
 };
 
 const ZoneCoveragePanel = ({
@@ -85,10 +207,31 @@ const ZoneCoveragePanel = ({
   loading = false,
   error = null,
   highlightZones = [],
+  editable = false,
+  disabled = false,
+  saving = false,
+  zoneLocalities = {},
+  onLocalitiesChange,
+  onSave,
 }: ZoneCoveragePanelProps) => {
   const [expandedZone, setExpandedZone] = useState<ShippingRateZone | null>(
     highlightZones[0] ?? null
   );
+
+  const getLocalitiesForZone = (zone: ShippingRateZone): string[] =>
+    zoneLocalities[zone] ??
+    zones.find((entry) => entry.zone === zone)?.localities ??
+    [];
+
+  const handleZoneLocalitiesChange = (
+    zone: ShippingRateZone,
+    localities: string[]
+  ) => {
+    onLocalitiesChange?.({
+      ...zoneLocalities,
+      [zone]: localities,
+    });
+  };
 
   if (loading) {
     return (
@@ -110,12 +253,15 @@ const ZoneCoveragePanel = ({
   return (
     <Box display="flex" flexDirection="column" gap="3">
       <Text fontSize="caption" color="neutral-textLow">
-        Referencia de barrios y partidos incluidos en cada zona de envio.
+        {editable
+          ? "Agrega o quita barrios y partidos incluidos en cada zona de envio."
+          : "Referencia de barrios y partidos incluidos en cada zona de envio."}
       </Text>
 
       {zones.map((zone) => {
         const isExpanded = expandedZone === zone.zone;
         const isHighlighted = highlightZones.includes(zone.zone);
+        const localities = getLocalitiesForZone(zone.zone);
 
         return (
           <Box
@@ -140,7 +286,7 @@ const ZoneCoveragePanel = ({
               <Box display="flex" flexDirection="column" gap="1">
                 <Text fontWeight="medium">{zone.label}</Text>
                 <Text fontSize="caption" color="neutral-textLow">
-                  {zone.localities.length} barrios/localidades
+                  {localities.length} barrios/localidades
                   {zone.postal_codes ? ` · ${zone.postal_codes}` : ""}
                 </Text>
               </Box>
@@ -150,7 +296,7 @@ const ZoneCoveragePanel = ({
                   setExpandedZone(isExpanded ? null : zone.zone)
                 }
               >
-                {isExpanded ? "Ocultar" : "Ver barrios"}
+                {isExpanded ? "Ocultar" : "Editar barrios"}
               </Button>
             </Box>
 
@@ -159,18 +305,35 @@ const ZoneCoveragePanel = ({
                 <Text fontSize="caption" color="neutral-textLow">
                   {zone.description}
                 </Text>
-                <Box display="flex" flexWrap="wrap" gap="1">
-                  {zone.localities.map((locality) => (
-                    <Tag key={`${zone.zone}-${locality}`} appearance="neutral">
-                      {locality}
-                    </Tag>
-                  ))}
-                </Box>
+                {editable ? (
+                  <EditableZoneLocalities
+                    zone={zone.zone}
+                    localities={localities}
+                    disabled={disabled || saving}
+                    onChange={handleZoneLocalitiesChange}
+                  />
+                ) : (
+                  <Box display="flex" flexWrap="wrap" gap="1">
+                    {localities.map((locality) => (
+                      <Tag key={`${zone.zone}-${locality}`} appearance="neutral">
+                        {locality}
+                      </Tag>
+                    ))}
+                  </Box>
+                )}
               </Box>
             )}
           </Box>
         );
       })}
+
+      {editable && onSave && (
+        <Box>
+          <Button appearance="primary" disabled={disabled || saving} onClick={onSave}>
+            {saving ? "Guardando..." : "Guardar cobertura"}
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 };

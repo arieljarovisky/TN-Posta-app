@@ -2,6 +2,10 @@ import {
   GBA_EXTENDED_LOCALITIES,
   GBA_NEAR_LOCALITIES,
 } from "./caba-gba.constants";
+import {
+  resolveZoneLocalities,
+  ZoneLocalitiesMap,
+} from "./zone-coverage";
 import { ShippingAddressInput } from "./zone-validator";
 
 import type { ShippingRateZone } from "@features/shipping/interfaces/shipping.interfaces";
@@ -51,12 +55,15 @@ const matchesLocalityList = (
   const values = [city, locality].filter(Boolean).map((value) => normalize(value!));
 
   return values.some((value) =>
-    localities.some(
-      (localityName) =>
-        value === localityName ||
-        value.includes(localityName) ||
-        localityName.includes(value)
-    )
+    localities.some((localityName) => {
+      const normalizedLocality = normalize(localityName);
+
+      return (
+        value === normalizedLocality ||
+        value.includes(normalizedLocality) ||
+        normalizedLocality.includes(value)
+      );
+    })
   );
 };
 
@@ -91,29 +98,45 @@ export const isGbaAddress = (address: ShippingAddressInput): boolean => {
   );
 };
 
+const hasCustomLocalities = (
+  zone: ShippingRateZone,
+  zoneLocalities?: ZoneLocalitiesMap
+): boolean => Boolean(zoneLocalities?.[zone]?.length);
+
 export const matchesShippingRateZone = (
   zone: ShippingRateZone,
-  address: ShippingAddressInput
+  address: ShippingAddressInput,
+  zoneLocalities?: ZoneLocalitiesMap
 ): boolean => {
+  const localities = resolveZoneLocalities(zone, zoneLocalities);
+
   switch (zone) {
     case "caba":
-      return isCabaAddress(address);
+      if (!isCabaAddress(address)) {
+        return false;
+      }
+
+      return hasCustomLocalities("caba", zoneLocalities)
+        ? matchesLocalityList(address.city, address.locality, localities)
+        : true;
     case "gba_near":
       return (
         isGbaAddress(address) &&
-        matchesLocalityList(address.city, address.locality, GBA_NEAR_LOCALITIES)
+        matchesLocalityList(address.city, address.locality, localities)
       );
     case "gba_extended":
       return (
         isGbaAddress(address) &&
-        matchesLocalityList(
-          address.city,
-          address.locality,
-          GBA_EXTENDED_LOCALITIES
-        )
+        matchesLocalityList(address.city, address.locality, localities)
       );
     case "gba_all":
-      return isGbaAddress(address);
+      if (!isGbaAddress(address)) {
+        return false;
+      }
+
+      return hasCustomLocalities("gba_all", zoneLocalities)
+        ? matchesLocalityList(address.city, address.locality, localities)
+        : true;
     default:
       return false;
   }
@@ -121,14 +144,9 @@ export const matchesShippingRateZone = (
 
 export const matchesShippingRateZoneByPostalCode = (
   zone: ShippingRateZone,
-  postalCode: string
+  postalCode: string,
+  zoneLocalities?: ZoneLocalitiesMap
 ): boolean => {
-  const address: ShippingAddressInput = {
-    city: "",
-    province: "",
-    zipcode: postalCode,
-  };
-
   if (zone === "caba") {
     return isCabaPostalCode(postalCode);
   }
@@ -137,7 +155,13 @@ export const matchesShippingRateZoneByPostalCode = (
     return isGbaPostalCode(postalCode) && !isCabaPostalCode(postalCode);
   }
 
-  return matchesShippingRateZone(zone, address);
+  const address: ShippingAddressInput = {
+    city: "",
+    province: "",
+    zipcode: postalCode,
+  };
+
+  return matchesShippingRateZone(zone, address, zoneLocalities);
 };
 
 export const SHIPPING_RATE_ZONE_LABELS: Record<ShippingRateZone, string> = {

@@ -74,9 +74,13 @@ class ShippingRatesService {
 
     const matchingRates = activeRates.filter((rate) =>
       useFullAddress
-        ? matchesShippingRateZone(rate.zone, address)
+        ? matchesShippingRateZone(rate.zone, address, settings.zone_localities)
         : postalCode
-          ? matchesShippingRateZoneByPostalCode(rate.zone, postalCode)
+          ? matchesShippingRateZoneByPostalCode(
+              rate.zone,
+              postalCode,
+              settings.zone_localities
+            )
           : false
     );
 

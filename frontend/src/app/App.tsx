@@ -1,20 +1,22 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter } from "react-router-dom";
 import { ToastProvider } from "@nimbus-ds/components";
+import { ThemeProvider } from "@nimbus-ds/styles";
 import { ErrorBoundary } from "@tiendanube/nexo";
 
 import Router from "./Router";
 import NexoSyncRoute from "./NexoSyncRoute";
 import { DarkModeProvider } from "./DarkModeProvider";
-import {
-  completeOAuthInstallIfNeeded,
-  getInstallStatusFromUrl,
-} from "./oauth/oauthInstall";
-import { isTiendanubeEmbedded } from "./oauth/installUi";
+import { getInstallStatusFromUrl } from "./oauth/oauthInstall";
+import { getTiendanubeAdminUrl, isTiendanubeEmbedded } from "./oauth/installUi";
 import OAuthInstallScreen from "./oauth/OAuthInstallScreen";
 import StandaloneNoticeScreen from "./oauth/StandaloneNoticeScreen";
 import { getNexoStatus, nexo } from "./nexoBootstrap";
 import "./I18n";
+
+const InstallShell = ({ children }: { children: React.ReactNode }) => (
+  <ThemeProvider theme="base">{children}</ThemeProvider>
+);
 
 const LoadingScreen = ({ message }: { message: string }) => (
   <div
@@ -32,29 +34,46 @@ const LoadingScreen = ({ message }: { message: string }) => (
 );
 
 const App = () => {
-  const [isInstalling] = useState(() => completeOAuthInstallIfNeeded());
   const [installStatus] = useState(() => getInstallStatusFromUrl());
   const nexoStatus = getNexoStatus();
 
-  if (isInstalling) {
-    return <LoadingScreen message="Instalando aplicacion..." />;
-  }
+  useEffect(() => {
+    if (!installStatus.installed) {
+      return;
+    }
+
+    const adminUrl = getTiendanubeAdminUrl();
+
+    if (adminUrl.includes("mitiendanube.com/admin/v2/apps/")) {
+      window.location.replace(adminUrl);
+    }
+  }, [installStatus.installed]);
 
   if (installStatus.missingCode) {
-    return <OAuthInstallScreen variant="missing_code" />;
+    return (
+      <InstallShell>
+        <OAuthInstallScreen variant="missing_code" />
+      </InstallShell>
+    );
   }
 
   if (installStatus.error) {
     return (
-      <OAuthInstallScreen
-        variant="error"
-        errorMessage={decodeURIComponent(installStatus.error)}
-      />
+      <InstallShell>
+        <OAuthInstallScreen
+          variant="error"
+          errorMessage={decodeURIComponent(installStatus.error)}
+        />
+      </InstallShell>
     );
   }
 
   if (installStatus.installed) {
-    return <OAuthInstallScreen variant="success" />;
+    return (
+      <InstallShell>
+        <LoadingScreen message="Redirigiendo al administrador de Tiendanube..." />
+      </InstallShell>
+    );
   }
 
   if (nexoStatus === "pending") {
@@ -62,7 +81,11 @@ const App = () => {
   }
 
   if (nexoStatus === "failed" && !isTiendanubeEmbedded()) {
-    return <StandaloneNoticeScreen />;
+    return (
+      <InstallShell>
+        <StandaloneNoticeScreen />
+      </InstallShell>
+    );
   }
 
   if (nexoStatus === "failed") {

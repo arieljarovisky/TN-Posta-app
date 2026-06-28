@@ -21,7 +21,7 @@ import { nexo } from "@/app";
 import { ReinstallStoreAlert, ShippingPublishAlert, ShippingRatesEditor, ZoneCoveragePanel } from "@/components";
 import { useStoreSettings } from "@/hooks/useStoreSettings";
 import { useZoneCoverage } from "@/hooks/useZoneCoverage";
-import { ShippingRateRule } from "@/types/shipping";
+import { ShippingRateRule, ZoneLocalitiesMap } from "@/types/shipping";
 import {
   clearInstallParamsFromUrl,
   getInstallStatusFromUrl,
@@ -42,22 +42,31 @@ const Home = () => {
     carrierId,
     shippingRates,
     shippingSyncMessage,
+    zoneLocalities,
     toggleEnabled,
     saveShippingConfig,
+    saveZoneLocalities,
     reloadSettings,
   } = useStoreSettings();
   const {
     zones: zoneCoverage,
     loading: zoneCoverageLoading,
     error: zoneCoverageError,
+    reloadCoverage,
   } = useZoneCoverage();
   const [carrierNameInput, setCarrierNameInput] = useState("TN Posta");
   const [ratesInput, setRatesInput] = useState<ShippingRateRule[]>([]);
+  const [zoneLocalitiesInput, setZoneLocalitiesInput] =
+    useState<ZoneLocalitiesMap>({});
 
   useEffect(() => {
     setCarrierNameInput(carrierName);
     setRatesInput(shippingRates);
   }, [carrierName, shippingRates]);
+
+  useEffect(() => {
+    setZoneLocalitiesInput(zoneLocalities);
+  }, [zoneLocalities]);
 
   useEffect(() => {
     if (connected) {
@@ -152,6 +161,50 @@ const Home = () => {
         });
       }
 
+      return;
+    }
+
+    addToast({
+      id: crypto.randomUUID(),
+      type: "danger",
+      text: t("errors.generic"),
+      duration: 4000,
+    });
+  };
+
+  const buildZoneLocalitiesPayload = (): ZoneLocalitiesMap =>
+    zoneCoverage.reduce((acc, zone) => {
+      acc[zone.zone] =
+        zoneLocalitiesInput[zone.zone] ?? zone.localities ?? [];
+      return acc;
+    }, {} as ZoneLocalitiesMap);
+
+  const handleSaveZoneLocalities = async () => {
+    const payload = buildZoneLocalitiesPayload();
+    const hasEmptyZone = zoneCoverage.some(
+      (zone) => !payload[zone.zone]?.length
+    );
+
+    if (hasEmptyZone) {
+      addToast({
+        id: crypto.randomUUID(),
+        type: "danger",
+        text: t("home.coverageEmptyZone"),
+        duration: 4000,
+      });
+      return;
+    }
+
+    const result = await saveZoneLocalities(payload);
+
+    if (result.success) {
+      await reloadCoverage();
+      addToast({
+        id: crypto.randomUUID(),
+        type: "success",
+        text: t("home.coverageSaved"),
+        duration: 4000,
+      });
       return;
     }
 
@@ -339,6 +392,12 @@ const Home = () => {
                     highlightZones={ratesInput
                       .filter((rate) => rate.active)
                       .map((rate) => rate.zone)}
+                    editable
+                    disabled={saving || loading}
+                    saving={saving}
+                    zoneLocalities={zoneLocalitiesInput}
+                    onLocalitiesChange={setZoneLocalitiesInput}
+                    onSave={handleSaveZoneLocalities}
                   />
                 </Card.Body>
               </Card>
